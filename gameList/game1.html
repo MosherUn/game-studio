@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>弹球大师</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0b0e14;
+            color: #e8edf5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: system-ui, sans-serif;
+        }
+        .game-container { text-align: center; padding: 30px; }
+        canvas { border: 2px solid #2a3340; border-radius: 16px; background: #141a24; }
+        .score { font-size: 24px; margin-bottom: 20px; color: #b388ff; }
+        .controls { margin-top: 16px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .btn {
+            padding: 10px 24px; border: none; border-radius: 30px;
+            background: #4c6ef5; color: white; font-size: 14px;
+            cursor: pointer; transition: 0.2s;
+        }
+        .btn:hover { transform: scale(0.95); }
+        .btn-outline { background: transparent; border: 1px solid #2a3340; color: #e8edf5; }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="score">🏆 分数: <span id="scoreDisplay">0</span></div>
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+        <div class="controls">
+            <button class="btn" id="startBtn">开始游戏</button>
+            <button class="btn btn-outline" id="resetBtn">重置</button>
+        </div>
+        <div style="margin-top:12px;color:#6b7a8f;font-size:13px;">🎯 用鼠标控制挡板接住球</div>
+    </div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        
+        let score = 0, gameRunning = false, animationId = null;
+        let ball = { x: 200, y: 200, radius: 10, dx: 3, dy: -3 };
+        let paddle = { x: 170, y: 380, width: 80, height: 12 };
+        let bricks = [];
+        const brickRows = 5, brickCols = 6, brickWidth = 55, brickHeight = 18;
+        const brickPadding = 8, brickOffsetTop = 30, brickOffsetLeft = 20;
+        
+        function initBricks() {
+            bricks = [];
+            const colors = ['#f44336', '#ff9800', '#ffeb3b', '#4caf50', '#2196f3'];
+            for (let r = 0; r < brickRows; r++) {
+                for (let c = 0; c < brickCols; c++) {
+                    bricks.push({
+                        x: brickOffsetLeft + c * (brickWidth + brickPadding),
+                        y: brickOffsetTop + r * (brickHeight + brickPadding),
+                        width: brickWidth, height: brickHeight,
+                        alive: true, color: colors[r % colors.length]
+                    });
+                }
+            }
+        }
+        initBricks();
+        
+        function draw() {
+            ctx.clearRect(0, 0, 400, 400);
+            bricks.forEach(b => {
+                if (b.alive) {
+                    ctx.fillStyle = b.color;
+                    ctx.shadowColor = b.color;
+                    ctx.shadowBlur = 10;
+                    ctx.fillRect(b.x, b.y, b.width, b.height);
+                    ctx.shadowBlur = 0;
+                }
+            });
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#b388ff';
+            ctx.shadowColor = '#b388ff';
+            ctx.shadowBlur = 20;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#4c6ef5';
+            ctx.shadowColor = '#4c6ef5';
+            ctx.shadowBlur = 15;
+            ctx.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
+            ctx.shadowBlur = 0;
+        }
+        
+        function update() {
+            if (!gameRunning) return;
+            ball.x += ball.dx; ball.y += ball.dy;
+            if (ball.x + ball.radius > 400 || ball.x - ball.radius < 0) ball.dx = -ball.dx;
+            if (ball.y - ball.radius < 0) ball.dy = -ball.dy;
+            if (ball.y + ball.radius > 400) {
+                gameRunning = false;
+                if (animationId) cancelAnimationFrame(animationId);
+                alert('游戏结束！得分: ' + score);
+                return;
+            }
+            if (ball.y + ball.radius > paddle.y && ball.x > paddle.x && ball.x < paddle.x + paddle.width) {
+                ball.dy = -ball.dy;
+                const speed = Math.sqrt(ball.dx*ball.dx + ball.dy*ball.dy) * 1.02;
+                const angle = (ball.x - paddle.x - paddle.width/2) / (paddle.width/2) * Math.PI/3;
+                ball.dx = speed * Math.sin(angle);
+                ball.dy = -speed * Math.cos(angle);
+            }
+            bricks.forEach(b => {
+                if (b.alive && ball.x > b.x && ball.x < b.x + b.width && ball.y > b.y && ball.y < b.y + b.height) {
+                    b.alive = false;
+                    score += 10;
+                    scoreDisplay.textContent = score;
+                    ball.dy = -ball.dy;
+                }
+            });
+            if (bricks.every(b => !b.alive)) {
+                gameRunning = false;
+                if (animationId) cancelAnimationFrame(animationId);
+                alert('🎉 恭喜通关！得分: ' + score);
+            }
+        }
+        
+        function gameLoop() { update(); draw(); animationId = requestAnimationFrame(gameLoop); }
+        
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const scaleX = canvas.width / rect.width;
+            paddle.x = Math.max(0, Math.min(400 - paddle.width, x * scaleX - paddle.width/2));
+        });
+        
+        document.getElementById('startBtn').addEventListener('click', () => {
+            if (gameRunning) return;
+            gameRunning = true;
+            if (animationId) cancelAnimationFrame(animationId);
+            gameLoop();
+        });
+        
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            gameRunning = false;
+            if (animationId) cancelAnimationFrame(animationId);
+            score = 0; scoreDisplay.textContent = '0';
+            ball.x = 200; ball.y = 200; ball.dx = 3; ball.dy = -3;
+            paddle.x = 170; initBricks(); draw();
+        });
+        draw();
+    </script>
+</body>
+</html>

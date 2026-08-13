@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <title>登录 · 社区游戏工坊</title>
+    <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+    <div id="app">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="login-header">
+                    <h1>🎮 社区游戏工坊</h1>
+                    <p>游玩 · 分享 · 管理</p>
+                </div>
+                <div class="login-form">
+                    <div class="form-group">
+                        <label>用户ID</label>
+                        <input class="form-input" id="loginId" placeholder="请输入用户ID" />
+                    </div>
+                    <div class="form-group">
+                        <label>密码</label>
+                        <input class="form-input" id="loginPwd" placeholder="请输入密码" type="password" />
+                    </div>
+                    <div class="login-actions">
+                        <button class="btn btn-primary btn-block" id="loginBtn">登录</button>
+                        <button class="btn btn-outline btn-block" id="registerBtn">注册新账号</button>
+                    </div>
+                    <div id="loginMessage" class="login-message"></div>
+                    <div style="text-align:center;margin-top:12px;font-size:12px;color:#6b7a8f;">
+                        ⚡ 数据存储于 GitHub
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="/src/login.ts"></script>
+</body>
+</html>

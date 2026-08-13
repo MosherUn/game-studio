@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>猜数字</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0b0e14;
+            color: #e8edf5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: system-ui, sans-serif;
+        }
+        .game-container { text-align: center; padding: 30px; max-width: 400px; }
+        .input-group { display: flex; gap: 10px; margin: 20px 0; justify-content: center; }
+        input {
+            padding: 10px 16px; border-radius: 30px; border: 1px solid #2a3340;
+            background: #1a212c; color: #e8edf5; font-size: 16px;
+            width: 120px; text-align: center;
+        }
+        .btn {
+            padding: 10px 24px; border: none; border-radius: 30px;
+            background: #4c6ef5; color: white; font-size: 14px;
+            cursor: pointer; transition: 0.2s;
+        }
+        .btn:hover { transform: scale(0.95); }
+        .btn-outline { background: transparent; border: 1px solid #2a3340; color: #e8edf5; }
+        .message {
+            padding: 12px; border-radius: 16px; background: #0f1620;
+            margin-top: 16px; min-height: 50px; font-size: 18px;
+        }
+        .hint { color: #6b7a8f; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h2>🔢 猜数字</h2>
+        <p class="hint">猜一个 1-100 之间的数字</p>
+        <div class="input-group">
+            <input type="number" id="guessInput" min="1" max="100" />
+            <button class="btn" id="guessBtn">猜</button>
+        </div>
+        <div class="message" id="messageDisplay">输入数字开始游戏</div>
+        <div style="margin-top:12px;display:flex;gap:10px;justify-content:center;">
+            <button class="btn btn-outline" id="newGameBtn">🔄 新游戏</button>
+        </div>
+        <div style="margin-top:8px;color:#6b7a8f;font-size:12px;">剩余次数: <span id="attemptsDisplay">10</span></div>
+    </div>
+    <script>
+        let target = Math.floor(Math.random() * 100) + 1;
+        let attempts = 10;
+        const messageDisplay = document.getElementById('messageDisplay');
+        const attemptsDisplay = document.getElementById('attemptsDisplay');
+        const guessInput = document.getElementById('guessInput');
+        
+        function checkGuess() {
+            const guess = parseInt(guessInput.value);
+            if (isNaN(guess) || guess < 1 || guess > 100) {
+                messageDisplay.textContent = '⚠️ 请输入 1-100 之间的数字';
+                return;
+            }
+            attempts--;
+            attemptsDisplay.textContent = attempts;
+            if (guess === target) {
+                messageDisplay.textContent = '🎉 恭喜你猜对了！答案是 ' + target;
+                guessInput.disabled = true;
+                return;
+            } else if (guess < target) {
+                messageDisplay.textContent = '📈 太小了！';
+            } else {
+                messageDisplay.textContent = '📉 太大了！';
+            }
+            if (attempts === 0) {
+                messageDisplay.textContent = '😅 游戏结束！答案是 ' + target;
+                guessInput.disabled = true;
+            }
+            guessInput.value = '';
+            guessInput.focus();
+        }
+        
+        document.getElementById('guessBtn').addEventListener('click', checkGuess);
+        guessInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') checkGuess(); });
+        
+        document.getElementById('newGameBtn').addEventListener('click', () => {
+            target = Math.floor(Math.random() * 100) + 1;
+            attempts = 10;
+            attemptsDisplay.textContent = attempts;
+            messageDisplay.textContent = '新游戏开始！';
+            guessInput.disabled = false;
+            guessInput.value = '';
+            guessInput.focus();
+        });
+        guessInput.focus();
+    </script>
+</body>
+</html>

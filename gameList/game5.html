@@ -1,0 +1,2060 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>象棋 · 段位赛</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #0b0e14;
+            color: #e8edf5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: system-ui, sans-serif;
+            padding: 20px;
+        }
+        .game-container {
+            max-width: 750px;
+            width: 100%;
+            background: #141a24;
+            border-radius: 36px;
+            padding: 24px;
+            border: 1px solid #2a3340;
+        }
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .game-title {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ff8a65, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .game-info {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            font-size: 14px;
+            color: #889bb5;
+        }
+        .game-info span {
+            background: #1a212c;
+            padding: 4px 14px;
+            border-radius: 30px;
+            border: 1px solid #2a3340;
+        }
+        .game-info .rank {
+            color: #ff8a65;
+            font-weight: 600;
+        }
+        .game-info .score {
+            color: #4caf50;
+            font-weight: 600;
+        }
+        .game-info .ai-level {
+            color: #ff9800;
+            font-weight: 600;
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            background: #0f1620;
+            border-radius: 30px;
+            align-items: center;
+        }
+        .mode-selector .btn {
+            padding: 6px 16px;
+            font-size: 13px;
+        }
+        .mode-selector .btn.active {
+            border-color: #4c6ef5;
+            background: #2a3a5a;
+            color: #fff;
+        }
+        .ai-level-selector {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            margin-left: auto;
+            flex-wrap: wrap;
+        }
+        .ai-level-selector span {
+            color: #6b7a8f;
+            font-size: 12px;
+            margin-right: 4px;
+        }
+        .ai-level-selector .btn {
+            padding: 2px 10px;
+            font-size: 11px;
+        }
+        .ai-level-selector .btn.active {
+            border-color: #ff9800;
+            background: #2a2a1a;
+            color: #ff9800;
+        }
+
+        .board-container {
+            display: flex;
+            justify-content: center;
+            margin: 12px 0;
+            position: relative;
+        }
+        canvas {
+            width: 100%;
+            max-width: 480px;
+            height: auto;
+            aspect-ratio: 9/10;
+            border: 2px solid #8d6e3f;
+            border-radius: 16px;
+            background: #d4a763;
+            cursor: pointer;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 12px;
+        }
+        .btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 30px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.2s;
+            background: #2a3546;
+            color: #e8edf5;
+            border: 1px solid #3f4b5e;
+        }
+        .btn:hover {
+            transform: scale(0.95);
+        }
+        .btn-primary {
+            background: #4c6ef5;
+            border-color: #4c6ef5;
+            color: white;
+        }
+        .btn-success {
+            background: #2e7d32;
+            border-color: #1b5e20;
+            color: white;
+        }
+        .btn-danger {
+            background: #d32f2f;
+            border-color: #b71c1c;
+            color: white;
+        }
+        .btn-outline {
+            background: transparent;
+        }
+        .btn-outline:hover {
+            background: #1e2632;
+        }
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .btn-sm {
+            padding: 4px 12px;
+            font-size: 12px;
+        }
+
+        .status-bar {
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: #0f1620;
+            border-radius: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: 14px;
+        }
+        .status-bar .turn {
+            color: #ff8a65;
+            font-weight: 600;
+        }
+        .status-bar .move-count {
+            color: #6b7a8f;
+        }
+        .status-bar .thinking {
+            color: #ff9800;
+            font-weight: 600;
+            animation: pulse 0.8s infinite;
+        }
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.2;
+            }
+        }
+
+        .rank-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 8px;
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: #0f1620;
+            border-radius: 16px;
+            font-size: 13px;
+        }
+        .rank-info .label {
+            color: #6b7a8f;
+        }
+        .rank-info .value {
+            color: #e8edf5;
+            font-weight: 600;
+        }
+
+        .season-info {
+            margin-top: 12px;
+            padding: 12px 16px;
+            background: #1a1a2e;
+            border-radius: 16px;
+            border: 1px solid #2a2a4e;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .season-info .season-title {
+            color: #ff8a65;
+            font-weight: 600;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-box {
+            background: #141a24;
+            border-radius: 36px;
+            padding: 32px;
+            max-width: 420px;
+            width: 100%;
+            border: 1px solid #2a3340;
+            text-align: center;
+        }
+        .modal-box h3 {
+            font-size: 20px;
+            margin-bottom: 12px;
+        }
+        .modal-box p {
+            color: #889bb5;
+            margin-bottom: 16px;
+            font-size: 14px;
+            white-space: pre-line;
+        }
+        .modal-box .btn {
+            margin: 4px;
+        }
+
+        .online-panel {
+            margin-top: 12px;
+            padding: 12px 16px;
+            background: #0f1620;
+            border-radius: 16px;
+            display: none;
+        }
+        .online-panel.active {
+            display: block;
+        }
+        .online-panel .room-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .online-panel input {
+            background: #1a212c;
+            border: 1px solid #2a3340;
+            border-radius: 30px;
+            padding: 6px 14px;
+            color: #e8edf5;
+            font-size: 13px;
+            width: 150px;
+        }
+        .online-panel input::placeholder {
+            color: #6b7a8f;
+        }
+
+        @media (max-width: 500px) {
+            .game-container {
+                padding: 12px;
+            }
+            .game-title {
+                font-size: 18px;
+            }
+            .rank-info {
+                grid-template-columns: 1fr 1fr;
+            }
+            .status-bar {
+                font-size: 12px;
+            }
+            .mode-selector {
+                justify-content: center;
+            }
+            .ai-level-selector {
+                margin-left: 0;
+            }
+            .online-panel input {
+                width: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <div class="game-title">🐴 象棋 · 段位赛</div>
+            <div class="game-info">
+                <span class="rank" id="rankDisplay">段位: 无</span>
+                <span class="score" id="scoreDisplay">积分: 0</span>
+                <span id="seasonDisplay">🏆 S1</span>
+                <span class="ai-level" id="aiLevelDisplay">🤖 难度: 中级</span>
+            </div>
+        </div>
+
+        <div class="mode-selector" id="modeSelector">
+            <button class="btn btn-outline btn-sm active" data-mode="ai">🤖 AI对战</button>
+            <button class="btn btn-outline btn-sm" data-mode="pvp">👥 单机双人</button>
+            <button class="btn btn-outline btn-sm" data-mode="online">🌐 联机对战</button>
+            <div class="ai-level-selector" id="aiLevelSelector">
+                <span>难度:</span>
+                <button class="btn btn-outline btn-sm" data-level="0">入门</button>
+                <button class="btn btn-outline btn-sm active" data-level="1">中级</button>
+                <button class="btn btn-outline btn-sm" data-level="2">高级</button>
+                <button class="btn btn-outline btn-sm" data-level="3">专家</button>
+            </div>
+        </div>
+
+        <div class="online-panel" id="onlinePanel">
+            <div class="room-info">
+                <div>
+                    <span style="color:#6b7a8f;font-size:13px;">房间号: </span>
+                    <span id="roomDisplay" style="color:#ff8a65;font-weight:600;">未创建</span>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button class="btn btn-primary btn-sm" id="createRoomBtn">📢 创建房间</button>
+                    <input type="text" id="joinRoomInput" placeholder="房间号" />
+                    <button class="btn btn-outline btn-sm" id="joinRoomBtn">🔗 加入</button>
+                    <button class="btn btn-danger btn-sm" id="leaveRoomBtn">🚪 离开</button>
+                </div>
+                <div style="font-size:12px;color:#6b7a8f;" id="playerCountDisplay">玩家: 1/2</div>
+            </div>
+            <div style="margin-top:8px;font-size:12px;color:#6b7a8f;" id="connectionStatus">未连接</div>
+        </div>
+
+        <div class="board-container">
+            <canvas id="boardCanvas" width="450" height="500"></canvas>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" id="newGameBtn">🔄 新游戏</button>
+            <button class="btn btn-success" id="passBtn">🙋 停一手</button>
+            <button class="btn btn-outline" id="undoBtn">↩️ 悔棋</button>
+            <button class="btn btn-danger" id="resignBtn">🏳️ 认输</button>
+        </div>
+
+        <div class="status-bar">
+            <span class="turn" id="turnDisplay">🔴 红棋走</span>
+            <span class="move-count" id="moveDisplay">步数: 0</span>
+            <span id="capturedDisplay">🔴 0 ⚫ 0</span>
+            <span id="thinkingDisplay"></span>
+        </div>
+
+        <div class="rank-info" id="rankInfo">
+            <div><span class="label">当前段位</span><br><span class="value" id="currentRank">无</span></div>
+            <div><span class="label">下一段位</span><br><span class="value" id="nextRank">-</span></div>
+            <div><span class="label">升级所需</span><br><span class="value" id="rankProgress">0/0</span></div>
+            <div><span class="label">胜率</span><br><span class="value" id="winRate">0%</span></div>
+        </div>
+
+        <div class="season-info" id="seasonInfo">
+            <span class="season-title" id="seasonTitle">🏆 第 1 赛季</span>
+            <span id="seasonDate">2024-09-20 开启</span>
+            <span id="seasonEnd">定段赛: 每月7号</span>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-box">
+            <h3 id="modalTitle">🎉 段位晋升！</h3>
+            <p id="modalMessage">恭喜你晋升到 1 段！</p>
+            <button class="btn btn-primary" id="modalBtn">确定</button>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // 中国象棋引擎 - 完整修复版（含将帅对面规则）
+        // ============================================================
+        class ChineseChessGame {
+            constructor() {
+                this.board = this.initBoard();
+                this.currentPlayer = 1;
+                this.moveHistory = [];
+                this.captured = { 1: 0, 2: 0 };
+                this.gameOver = false;
+                this.moveCount = 0;
+                this.maxMoves = 300;
+                this.selectedPiece = null;
+                this.validMoves = [];
+                this.lastMove = null;
+            }
+
+            initBoard() {
+                const board = Array(10).fill(null).map(() => Array(9).fill(0));
+                board[0] = [12, 11, 10, 9, 8, 9, 10, 11, 12];
+                board[2] = [0, 13, 0, 0, 0, 0, 0, 13, 0];
+                board[3] = [14, 0, 14, 0, 14, 0, 14, 0, 14];
+                board[6] = [7, 0, 7, 0, 7, 0, 7, 0, 7];
+                board[7] = [0, 6, 0, 0, 0, 0, 0, 6, 0];
+                board[9] = [5, 4, 3, 2, 1, 2, 3, 4, 5];
+                return board;
+            }
+
+            clone() {
+                const g = new ChineseChessGame();
+                g.board = this.board.map(row => [...row]);
+                g.currentPlayer = this.currentPlayer;
+                g.moveHistory = this.moveHistory.map(m => ({ ...m }));
+                g.captured = { ...this.captured };
+                g.gameOver = this.gameOver;
+                g.moveCount = this.moveCount;
+                g.selectedPiece = this.selectedPiece ? { ...this.selectedPiece } : null;
+                g.validMoves = this.validMoves.map(m => ({ from: { ...m.from }, to: { ...m.to } }));
+                return g;
+            }
+
+            getPiece(row, col) {
+                if (row < 0 || row >= 10 || col < 0 || col >= 9) return 0;
+                return this.board[row][col];
+            }
+
+            getColor(piece) {
+                if (piece === 0) return 0;
+                return piece <= 7 ? 1 : 2;
+            }
+
+            getPieceSymbol(piece) {
+                const symbols = {
+                    1: '帅',
+                    2: '仕',
+                    3: '相',
+                    4: '马',
+                    5: '车',
+                    6: '炮',
+                    7: '兵',
+                    8: '将',
+                    9: '士',
+                    10: '象',
+                    11: '马',
+                    12: '车',
+                    13: '砲',
+                    14: '卒'
+                };
+                return symbols[piece] || '';
+            }
+
+            isInBoard(row, col) {
+                return row >= 0 && row < 10 && col >= 0 && col < 9;
+            }
+
+            isInRedPalace(row, col) {
+                return row >= 7 && row <= 9 && col >= 3 && col <= 5;
+            }
+
+            isInBlackPalace(row, col) {
+                return row >= 0 && row <= 2 && col >= 3 && col <= 5;
+            }
+
+            isInRedSide(row) { return row >= 5 && row <= 9; }
+            isInBlackSide(row) { return row >= 0 && row <= 4; }
+
+            // ============================================================
+            // ✅ 获取合法走法 - 含将帅对面检测
+            // ============================================================
+            getLegalMoves(row, col) {
+                const piece = this.board[row][col];
+                if (piece === 0) return [];
+                const color = this.getColor(piece);
+                if (color !== this.currentPlayer) return [];
+
+                const moves = [];
+                const enemy = 3 - color;
+
+                switch (piece) {
+                    case 1:
+                    case 8: {
+                        const dirs = [
+                            [-1, 0],
+                            [1, 0],
+                            [0, -1],
+                            [0, 1]
+                        ];
+                        const palace = color === 1 ? this.isInRedPalace.bind(this) : this.isInBlackPalace.bind(this);
+                        for (const [dr, dc] of dirs) {
+                            const nr = row + dr,
+                                nc = col + dc;
+                            if (this.isInBoard(nr, nc) && palace(nr, nc)) {
+                                const target = this.board[nr][nc];
+                                if (target === 0 || this.getColor(target) === enemy) {
+                                    moves.push({ from: { row, col }, to: { row: nr, col: nc } });
+                                }
+                            }
+                        }
+                        break;
+                    }
+                    case 2:
+                    case 9: {
+                        const dirs = [
+                            [-1, -1],
+                            [-1, 1],
+                            [1, -1],
+                            [1, 1]
+                        ];
+                        const palace = color === 1 ? this.isInRedPalace.bind(this) : this.isInBlackPalace.bind(this);
+                        for (const [dr, dc] of dirs) {
+                            const nr = row + dr,
+                                nc = col + dc;
+                            if (this.isInBoard(nr, nc) && palace(nr, nc)) {
+                                const target = this.board[nr][nc];
+                                if (target === 0 || this.getColor(target) === enemy) {
+                                    moves.push({ from: { row, col }, to: { row: nr, col: nc } });
+                                }
+                            }
+                        }
+                        break;
+                    }
+                    case 3:
+                    case 10: {
+                        const dirs = [
+                            [-2, -2],
+                            [-2, 2],
+                            [2, -2],
+                            [2, 2]
+                        ];
+                        const side = color === 1 ? this.isInRedSide.bind(this) : this.isInBlackSide.bind(this);
+                        for (const [dr, dc] of dirs) {
+                            const nr = row + dr,
+                                nc = col + dc;
+                            const br = row + dr / 2,
+                                bc = col + dc / 2;
+                            if (this.isInBoard(nr, nc) && side(nr) && this.board[br][bc] === 0) {
+                                const target = this.board[nr][nc];
+                                if (target === 0 || this.getColor(target) === enemy) {
+                                    moves.push({ from: { row, col }, to: { row: nr, col: nc } });
+                                }
+                            }
+                        }
+                        break;
+                    }
+                    case 4:
+                    case 11: {
+                        const jumps = [
+                            [-2, -1, -1, 0],
+                            [-2, 1, -1, 0],
+                            [2, -1, 1, 0],
+                            [2, 1, 1, 0],
+                            [-1, -2, 0, -1],
+                            [-1, 2, 0, 1],
+                            [1, -2, 0, -1],
+                            [1, 2, 0, 1]
+                        ];
+                        for (const [dr, dc, br, bc] of jumps) {
+                            const nr = row + dr,
+                                nc = col + dc;
+                            const legR = row + br,
+                                legC = col + bc;
+                            if (this.isInBoard(nr, nc) && this.board[legR][legC] === 0) {
+                                const target = this.board[nr][nc];
+                                if (target === 0 || this.getColor(target) === enemy) {
+                                    moves.push({ from: { row, col }, to: { row: nr, col: nc } });
+                                }
+                            }
+                        }
+                        break;
+                    }
+                    case 5:
+                    case 12: {
+                        const dirs = [
+                            [-1, 0],
+                            [1, 0],
+                            [0, -1],
+                            [0, 1]
+                        ];
+                        for (const [dr, dc] of dirs) {
+                            let r = row + dr,
+                                c = col + dc;
+                            while (this.isInBoard(r, c)) {
+                                const target = this.board[r][c];
+                                if (target === 0) {
+                                    moves.push({ from: { row, col }, to: { row: r, col: c } });
+                                } else {
+                                    if (this.getColor(target) === enemy) {
+                                        moves.push({ from: { row, col }, to: { row: r, col: c } });
+                                    }
+                                    break;
+                                }
+                                r += dr;
+                                c += dc;
+                            }
+                        }
+                        break;
+                    }
+                    case 6:
+                    case 13: {
+                        const dirs = [
+                            [-1, 0],
+                            [1, 0],
+                            [0, -1],
+                            [0, 1]
+                        ];
+                        for (const [dr, dc] of dirs) {
+                            let r = row + dr,
+                                c = col + dc;
+                            let found = false;
+                            while (this.isInBoard(r, c)) {
+                                const target = this.board[r][c];
+                                if (!found) {
+                                    if (target === 0) {
+                                        moves.push({ from: { row, col }, to: { row: r, col: c } });
+                                    } else {
+                                        found = true;
+                                    }
+                                } else {
+                                    if (target !== 0) {
+                                        if (this.getColor(target) === enemy) {
+                                            moves.push({ from: { row, col }, to: { row: r, col: c } });
+                                        }
+                                        break;
+                                    }
+                                }
+                                r += dr;
+                                c += dc;
+                            }
+                        }
+                        break;
+                    }
+                    case 7:
+                    case 14: {
+                        const forward = color === 1 ? -1 : 1;
+                        const crossed = color === 1 ? row <= 4 : row >= 5;
+                        const nr = row + forward;
+                        if (this.isInBoard(nr, col)) {
+                            const target = this.board[nr][col];
+                            if (target === 0 || this.getColor(target) === enemy) {
+                                moves.push({ from: { row, col }, to: { row: nr, col: col } });
+                            }
+                        }
+                        if (crossed) {
+                            for (const dc of [-1, 1]) {
+                                const nc = col + dc;
+                                if (this.isInBoard(row, nc)) {
+                                    const target = this.board[row][nc];
+                                    if (target === 0 || this.getColor(target) === enemy) {
+                                        moves.push({ from: { row, col }, to: { row: row, col: nc } });
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
+
+                // ✅ 过滤：走法不能导致己方将帅被吃，且不能造成将帅对面
+                const filtered = [];
+                for (const move of moves) {
+                    const simBoard = this.board.map(row => [...row]);
+                    const movingPiece = simBoard[move.from.row][move.from.col];
+                    simBoard[move.to.row][move.to.col] = movingPiece;
+                    simBoard[move.from.row][move.from.col] = 0;
+
+                    const king = color === 1 ? 1 : 8;
+                    let kingPos = null;
+                    for (let r = 0; r < 10; r++) {
+                        for (let c = 0; c < 9; c++) {
+                            if (simBoard[r][c] === king) {
+                                kingPos = { row: r, col: c };
+                                break;
+                            }
+                        }
+                        if (kingPos) break;
+                    }
+
+                    if (!kingPos) continue;
+
+                    // ✅ 检查将帅对面
+                    const enemyKing = color === 1 ? 8 : 1;
+                    let enemyKingPos = null;
+                    for (let r = 0; r < 10; r++) {
+                        for (let c = 0; c < 9; c++) {
+                            if (simBoard[r][c] === enemyKing) {
+                                enemyKingPos = { row: r, col: c };
+                                break;
+                            }
+                        }
+                        if (enemyKingPos) break;
+                    }
+
+                    // 如果走完后将帅在同一列且中间无棋子 → 非法走法
+                    if (enemyKingPos && kingPos.col === enemyKingPos.col) {
+                        let blocked = false;
+                        const minR = Math.min(kingPos.row, enemyKingPos.row);
+                        const maxR = Math.max(kingPos.row, enemyKingPos.row);
+                        for (let r = minR + 1; r < maxR; r++) {
+                            if (simBoard[r][kingPos.col] !== 0) {
+                                blocked = true;
+                                break;
+                            }
+                        }
+                        if (!blocked) {
+                            continue; // 跳过这个走法
+                        }
+                    }
+
+                    // 检查将帅是否被攻击
+                    let inCheck = false;
+                    const enemyColor = 3 - color;
+                    for (let r = 0; r < 10; r++) {
+                        for (let c = 0; c < 9; c++) {
+                            const p = simBoard[r][c];
+                            if (p === 0) continue;
+                            if (this.getColor(p) === enemyColor) {
+                                if (this.canAttack(simBoard, r, c, kingPos.row, kingPos.col)) {
+                                    inCheck = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (inCheck) break;
+                    }
+
+                    if (!inCheck) {
+                        filtered.push(move);
+                    }
+                }
+
+                return filtered;
+            }
+
+            // ✅ 检查棋子能否攻击目标
+            canAttack(board, fromRow, fromCol, toRow, toCol) {
+                const piece = board[fromRow][fromCol];
+                const color = this.getColor(piece);
+                const dr = toRow - fromRow;
+                const dc = toCol - fromCol;
+                const absDr = Math.abs(dr);
+                const absDc = Math.abs(dc);
+
+                switch (piece) {
+                    case 1:
+                    case 8:
+                        return absDr + absDc === 1 &&
+                            (color === 1 ? toRow >= 7 && toRow <= 9 && toCol >= 3 && toCol <= 5 :
+                                toRow >= 0 && toRow <= 2 && toCol >= 3 && toCol <= 5);
+                    case 2:
+                    case 9:
+                        return absDr === 1 && absDc === 1 &&
+                            (color === 1 ? toRow >= 7 && toRow <= 9 && toCol >= 3 && toCol <= 5 :
+                                toRow >= 0 && toRow <= 2 && toCol >= 3 && toCol <= 5);
+                    case 3:
+                    case 10: {
+                        if (absDr !== 2 || absDc !== 2) return false;
+                        const br = (fromRow + toRow) / 2,
+                            bc = (fromCol + toCol) / 2;
+                        return board[br][bc] === 0 && (color === 1 ? toRow >= 5 : toRow <= 4);
+                    }
+                    case 4:
+                    case 11: {
+                        if (absDr === 2 && absDc === 1) {
+                            const legR = fromRow + (dr > 0 ? 1 : -1);
+                            return board[legR][fromCol] === 0;
+                        }
+                        if (absDr === 1 && absDc === 2) {
+                            const legC = fromCol + (dc > 0 ? 1 : -1);
+                            return board[fromRow][legC] === 0;
+                        }
+                        return false;
+                    }
+                    case 5:
+                    case 12: {
+                        if (fromRow === toRow) {
+                            const minC = Math.min(fromCol, toCol);
+                            const maxC = Math.max(fromCol, toCol);
+                            for (let c = minC + 1; c < maxC; c++) {
+                                if (board[fromRow][c] !== 0) return false;
+                            }
+                            return true;
+                        }
+                        if (fromCol === toCol) {
+                            const minR = Math.min(fromRow, toRow);
+                            const maxR = Math.max(fromRow, toRow);
+                            for (let r = minR + 1; r < maxR; r++) {
+                                if (board[r][fromCol] !== 0) return false;
+                            }
+                            return true;
+                        }
+                        return false;
+                    }
+                    case 6:
+                    case 13: {
+                        if (fromRow === toRow) {
+                            let count = 0;
+                            const minC = Math.min(fromCol, toCol);
+                            const maxC = Math.max(fromCol, toCol);
+                            for (let c = minC + 1; c < maxC; c++) {
+                                if (board[fromRow][c] !== 0) count++;
+                            }
+                            return count === 1;
+                        }
+                        if (fromCol === toCol) {
+                            let count = 0;
+                            const minR = Math.min(fromRow, toRow);
+                            const maxR = Math.max(fromRow, toRow);
+                            for (let r = minR + 1; r < maxR; r++) {
+                                if (board[r][fromCol] !== 0) count++;
+                            }
+                            return count === 1;
+                        }
+                        return false;
+                    }
+                    case 7:
+                    case 14: {
+                        if (color === 1) {
+                            if (dr === -1 && dc === 0) return true;
+                            if (fromRow <= 4 && absDc === 1 && dr === 0) return true;
+                        } else {
+                            if (dr === 1 && dc === 0) return true;
+                            if (fromRow >= 5 && absDc === 1 && dr === 0) return true;
+                        }
+                        return false;
+                    }
+                    default:
+                        return false;
+                }
+            }
+
+            findPiece(piece) {
+                for (let r = 0; r < 10; r++) {
+                    for (let c = 0; c < 9; c++) {
+                        if (this.board[r][c] === piece) {
+                            return { row: r, col: c };
+                        }
+                    }
+                }
+                return null;
+            }
+
+            // ============================================================
+            // ✅ 选择棋子
+            // ============================================================
+            selectPiece(row, col) {
+                const piece = this.board[row][col];
+                if (piece === 0) {
+                    this.selectedPiece = null;
+                    this.validMoves = [];
+                    return { success: false, message: '没有棋子' };
+                }
+                const color = this.getColor(piece);
+                if (color !== this.currentPlayer) {
+                    this.selectedPiece = null;
+                    this.validMoves = [];
+                    return { success: false, message: '不是你的回合' };
+                }
+                const moves = this.getLegalMoves(row, col);
+                if (moves.length === 0) {
+                    this.selectedPiece = null;
+                    this.validMoves = [];
+                    return { success: false, message: '该棋子没有合法走法' };
+                }
+                this.selectedPiece = { row, col };
+                this.validMoves = moves;
+                return { success: true, moves: this.validMoves };
+            }
+
+            // ============================================================
+            // ✅ 走棋
+            // ============================================================
+            placeStone(row, col) {
+                if (this.gameOver) return { success: false, message: '游戏已结束' };
+                if (!this.selectedPiece) return { success: false, message: '请先选择棋子' };
+
+                const from = this.selectedPiece;
+                const piece = this.board[from.row][from.col];
+                const color = this.getColor(piece);
+
+                const found = this.validMoves.find(m => m.to.row === row && m.to.col === col);
+                if (!found) {
+                    return { success: false, message: '非法走法' };
+                }
+
+                const captured = this.board[row][col];
+                if (captured !== 0) {
+                    this.captured[color] = (this.captured[color] || 0) + 1;
+                }
+
+                this.moveHistory.push({
+                    from: { row: from.row, col: from.col },
+                    to: { row: row, col: col },
+                    piece: piece,
+                    captured: captured,
+                    color: color
+                });
+
+                this.board[row][col] = piece;
+                this.board[from.row][from.col] = 0;
+                this.moveCount++;
+                this.lastMove = { from: { row: from.row, col: from.col }, to: { row: row, col: col } };
+                this.selectedPiece = null;
+                this.validMoves = [];
+
+                // ✅ 检查是否吃掉将帅
+                if (captured === 1 || captured === 8) {
+                    this.gameOver = true;
+                    return { success: true, message: '吃掉了将帅！', captured, gameOver: true, winner: color };
+                }
+
+                const enemy = 3 - color;
+                this.currentPlayer = enemy;
+
+                // ✅ 检查是否被将杀
+                if (!this.hasLegalMove(enemy)) {
+                    this.gameOver = true;
+                    return { success: true, message: '将杀！', captured, gameOver: true, winner: color };
+                }
+
+                if (this.moveCount >= this.maxMoves) {
+                    this.gameOver = true;
+                    return { success: true, message: '达到最大步数', captured, gameOver: true };
+                }
+
+                return { success: true, message: '走法成功', captured };
+            }
+
+            hasLegalMove(color) {
+                const saved = this.currentPlayer;
+                this.currentPlayer = color;
+                for (let r = 0; r < 10; r++) {
+                    for (let c = 0; c < 9; c++) {
+                        const piece = this.board[r][c];
+                        if (this.getColor(piece) === color) {
+                            const moves = this.getLegalMoves(r, c);
+                            if (moves.length > 0) {
+                                this.currentPlayer = saved;
+                                return true;
+                            }
+                        }
+                    }
+                }
+                this.currentPlayer = saved;
+                return false;
+            }
+
+            getValidMoves() {
+                return this.validMoves;
+            }
+
+            getHistory() {
+                return this.moveHistory;
+            }
+
+            undo() {
+                if (this.moveHistory.length === 0) return { success: false, message: '没有可悔的棋' };
+                const last = this.moveHistory.pop();
+                this.board[last.from.row][last.from.col] = last.piece;
+                this.board[last.to.row][last.to.col] = last.captured || 0;
+                this.currentPlayer = last.color;
+                this.moveCount--;
+                this.gameOver = false;
+                this.selectedPiece = null;
+                this.validMoves = [];
+                this.lastMove = null;
+                return { success: true };
+            }
+
+            resign() {
+                this.gameOver = true;
+                const winner = 3 - this.currentPlayer;
+                return { success: true, winner };
+            }
+
+            getLegalMovesForColor(color) {
+                const saved = this.currentPlayer;
+                this.currentPlayer = color;
+                const allMoves = [];
+                for (let r = 0; r < 10; r++) {
+                    for (let c = 0; c < 9; c++) {
+                        if (this.getColor(this.board[r][c]) === color) {
+                            const moves = this.getLegalMoves(r, c);
+                            for (const move of moves) {
+                                allMoves.push(move);
+                            }
+                        }
+                    }
+                }
+                this.currentPlayer = saved;
+                return allMoves;
+            }
+
+            pass() {
+                this.currentPlayer = 3 - this.currentPlayer;
+                this.moveCount++;
+            }
+        }
+
+        // ============================================================
+        // 段位系统
+        // ============================================================
+        const RANK_LEVELS = [
+            { name: '无', minScore: 0, maxScore: 99 },
+            { name: '25级', minScore: 100, maxScore: 199 },
+            { name: '24级', minScore: 200, maxScore: 299 },
+            { name: '23级', minScore: 300, maxScore: 399 },
+            { name: '22级', minScore: 400, maxScore: 499 },
+            { name: '21级', minScore: 500, maxScore: 599 },
+            { name: '20级', minScore: 600, maxScore: 699 },
+            { name: '19级', minScore: 700, maxScore: 799 },
+            { name: '18级', minScore: 800, maxScore: 899 },
+            { name: '17级', minScore: 900, maxScore: 999 },
+            { name: '16级', minScore: 1000, maxScore: 1099 },
+            { name: '15级', minScore: 1100, maxScore: 1199 },
+            { name: '14级', minScore: 1200, maxScore: 1299 },
+            { name: '13级', minScore: 1300, maxScore: 1399 },
+            { name: '12级', minScore: 1400, maxScore: 1499 },
+            { name: '11级', minScore: 1500, maxScore: 1599 },
+            { name: '10级', minScore: 1600, maxScore: 1699 },
+            { name: '9级', minScore: 1700, maxScore: 1799 },
+            { name: '8级', minScore: 1800, maxScore: 1899 },
+            { name: '7级', minScore: 1900, maxScore: 1999 },
+            { name: '6级', minScore: 2000, maxScore: 2099 },
+            { name: '5级', minScore: 2100, maxScore: 2199 },
+            { name: '4级', minScore: 2200, maxScore: 2299 },
+            { name: '3级', minScore: 2300, maxScore: 2399 },
+            { name: '2级', minScore: 2400, maxScore: 2499 },
+            { name: '1级', minScore: 2500, maxScore: 2599 },
+            { name: '1段', minScore: 2600, maxScore: 2699 },
+            { name: '2段', minScore: 2700, maxScore: 2799 },
+            { name: '3段', minScore: 2800, maxScore: 2899 },
+            { name: '4段', minScore: 2900, maxScore: 2999 },
+            { name: '5段', minScore: 3000, maxScore: 3099 },
+            { name: '6段', minScore: 3100, maxScore: 3199 },
+            { name: '7段', minScore: 3200, maxScore: 3299 },
+            { name: '8段', minScore: 3300, maxScore: 3399 },
+            { name: '9段', minScore: 3400, maxScore: Infinity },
+        ];
+
+        class RankSystem {
+            constructor() {
+                this.elo = 1000;
+                this.gamesPlayed = 0;
+                this.wins = 0;
+                this.losses = 0;
+                this.draws = 0;
+                this.season = 1;
+                this.seasonStart = new Date(2024, 8, 20);
+                this.lastRank = '无';
+                this.promotionHistory = [];
+                this.load();
+            }
+
+            load() {
+                try {
+                    const saved = localStorage.getItem('chess_rank_data');
+                    if (saved) {
+                        const data = JSON.parse(saved);
+                        Object.assign(this, data);
+                        this.checkSeason();
+                    }
+                } catch (e) { console.warn('加载段位数据失败:', e); }
+            }
+
+            save() {
+                try {
+                    localStorage.setItem('chess_rank_data', JSON.stringify({
+                        elo: this.elo,
+                        gamesPlayed: this.gamesPlayed,
+                        wins: this.wins,
+                        losses: this.losses,
+                        draws: this.draws,
+                        season: this.season,
+                        seasonStart: this.seasonStart,
+                        lastRank: this.lastRank,
+                        promotionHistory: this.promotionHistory
+                    }));
+                } catch (e) { console.warn('保存段位数据失败:', e); }
+            }
+
+            getRank() {
+                for (const rank of RANK_LEVELS) {
+                    if (this.elo >= rank.minScore && this.elo <= rank.maxScore) {
+                        return rank;
+                    }
+                }
+                return RANK_LEVELS[RANK_LEVELS.length - 1];
+            }
+
+            getNextRank() {
+                const current = this.getRank();
+                const idx = RANK_LEVELS.indexOf(current);
+                if (idx < RANK_LEVELS.length - 1) {
+                    return RANK_LEVELS[idx + 1];
+                }
+                return current;
+            }
+
+            getProgress() {
+                const current = this.getRank();
+                const next = this.getNextRank();
+                if (current === next) return { current: current.maxScore, next: current.maxScore, progress: 100 };
+                const earned = this.elo - current.minScore;
+                const needed = next.minScore - current.minScore;
+                return {
+                    current: this.elo,
+                    next: next.minScore,
+                    progress: Math.min(100, Math.floor((earned / needed) * 100))
+                };
+            }
+
+            getPromotionRequirement() {
+                const current = this.getRank();
+                const idx = RANK_LEVELS.indexOf(current);
+                const targetIdx = idx + Math.floor((idx + 1) / 2);
+                const targetRank = RANK_LEVELS[Math.min(RANK_LEVELS.length - 1, targetIdx)];
+                return {
+                    from: current.name,
+                    to: targetRank.name,
+                    required: targetRank.minScore - this.elo,
+                    progress: Math.min(100, Math.floor(((this.elo - current.minScore) / (targetRank.minScore - current.minScore)) *
+                    100))
+                };
+            }
+
+            recordGame(result, opponentRank) {
+                this.gamesPlayed++;
+                let eloChange = 0;
+                const baseChange = 16;
+                const rankDiff = this.getRankIndex(opponentRank) - this.getRankIndex(this.getRank().name);
+                const expected = 1 / (1 + Math.pow(10, -rankDiff / 400));
+
+                if (result === 'win') {
+                    this.wins++;
+                    eloChange = Math.round(baseChange * (1 - expected));
+                    if (this.wins % 3 === 0) eloChange += 2;
+                } else if (result === 'loss') {
+                    this.losses++;
+                    eloChange = Math.round(-baseChange * expected);
+                } else {
+                    this.draws++;
+                    eloChange = Math.round(baseChange * (0.5 - expected));
+                }
+
+                const oldRank = this.getRank();
+                this.elo = Math.max(0, this.elo + eloChange);
+                const newRank = this.getRank();
+
+                if (newRank.name !== oldRank.name) {
+                    const isPromotion = this.getRankIndex(newRank.name) > this.getRankIndex(oldRank.name);
+                    this.promotionHistory.push({
+                        from: oldRank.name,
+                        to: newRank.name,
+                        date: new Date().toISOString(),
+                        type: isPromotion ? '晋升' : '降级'
+                    });
+                    if (isPromotion) {
+                        this.lastRank = newRank.name;
+                        this.save();
+                        return { promoted: true, from: oldRank.name, to: newRank.name, eloChange };
+                    }
+                }
+                this.save();
+                return { promoted: false, eloChange };
+            }
+
+            getRankIndex(name) {
+                for (let i = 0; i < RANK_LEVELS.length; i++) {
+                    if (RANK_LEVELS[i].name === name) return i;
+                }
+                return 0;
+            }
+
+            checkSeason() {
+                const now = new Date();
+                const seasonMonths = [2, 5, 8, 11];
+                let currentSeason = 1;
+                let seasonStart = new Date(2024, 8, 20);
+
+                for (let i = 0; i < seasonMonths.length; i++) {
+                    const checkDate = new Date(2024, seasonMonths[i], 20);
+                    if (now >= checkDate) {
+                        currentSeason = i + 1;
+                        seasonStart = checkDate;
+                    }
+                }
+
+                if (currentSeason > this.season) {
+                    const currentRank = this.getRank();
+                    const idx = this.getRankIndex(currentRank.name);
+                    const newIdx = Math.max(0, idx - 2);
+                    const newRank = RANK_LEVELS[newIdx];
+                    if (newRank.name !== currentRank.name) {
+                        this.elo = Math.max(0, newRank.minScore + 50);
+                        this.promotionHistory.push({
+                            from: currentRank.name,
+                            to: newRank.name,
+                            date: new Date().toISOString(),
+                            type: '赛季降段'
+                        });
+                    }
+                    this.season = currentSeason;
+                    this.seasonStart = seasonStart;
+                }
+
+                const day = now.getDate();
+                if (day === 7) {
+                    const winRate = this.gamesPlayed > 0 ? this.wins / this.gamesPlayed : 0;
+                    if (winRate > 0.6) {
+                        const current = this.getRank();
+                        const idx = this.getRankIndex(current.name);
+                        const newIdx = Math.min(RANK_LEVELS.length - 1, idx + 1);
+                        const newRank = RANK_LEVELS[newIdx];
+                        if (newRank.name !== current.name) {
+                            this.elo = Math.max(0, newRank.minScore + 100);
+                            this.promotionHistory.push({
+                                from: current.name,
+                                to: newRank.name,
+                                date: new Date().toISOString(),
+                                type: '定段赛晋升'
+                            });
+                        }
+                    }
+                }
+                this.save();
+            }
+
+            getStats() {
+                return {
+                    elo: this.elo,
+                    rank: this.getRank().name,
+                    games: this.gamesPlayed,
+                    wins: this.wins,
+                    losses: this.losses,
+                    draws: this.draws,
+                    winRate: this.gamesPlayed > 0 ? Math.round((this.wins / this.gamesPlayed) * 100) : 0,
+                    season: this.season,
+                    promotionHistory: this.promotionHistory.slice(-5)
+                };
+            }
+        }
+
+        // ============================================================
+        // 象棋AI
+        // ============================================================
+        class ChessAI {
+            constructor(level = 1) {
+                this.level = level;
+                this.thinking = false;
+                this.maxDepth = this.getDepth();
+            }
+
+            getDepth() {
+                const depths = { 0: 1, 1: 2, 2: 3, 3: 3 };
+                return depths[this.level] || 2;
+            }
+
+            setLevel(level) {
+                this.level = level;
+                this.maxDepth = this.getDepth();
+            }
+
+            evaluateBoard(game, player) {
+                let score = 0;
+                const pieceValues = {
+                    1: 1000,
+                    2: 200,
+                    3: 200,
+                    4: 450,
+                    5: 600,
+                    6: 300,
+                    7: 100,
+                    8: 1000,
+                    9: 200,
+                    10: 200,
+                    11: 450,
+                    12: 600,
+                    13: 300,
+                    14: 100
+                };
+
+                for (let r = 0; r < 10; r++) {
+                    for (let c = 0; c < 9; c++) {
+                        const piece = game.board[r][c];
+                        if (piece === 0) continue;
+                        const color = game.getColor(piece);
+                        const value = pieceValues[piece] || 0;
+                        if (color === player) {
+                            score += value;
+                            if (piece === 7 && r <= 4) score += 30;
+                            if (piece === 14 && r >= 5) score += 30;
+                        } else {
+                            score -= value;
+                            if (piece === 7 && r <= 4) score -= 30;
+                            if (piece === 14 && r >= 5) score -= 30;
+                        }
+                    }
+                }
+
+                const center = [
+                    [4, 3],
+                    [4, 4],
+                    [4, 5],
+                    [5, 3],
+                    [5, 4],
+                    [5, 5]
+                ];
+                for (const [r, c] of center) {
+                    const piece = game.board[r][c];
+                    if (piece !== 0) {
+                        const color = game.getColor(piece);
+                        if (color === player) score += 10;
+                        else score -= 10;
+                    }
+                }
+
+                return score;
+            }
+
+            minimax(game, depth, alpha, beta, isMaximizing, player) {
+                if (depth === 0 || game.gameOver) {
+                    return { score: this.evaluateBoard(game, player), move: null };
+                }
+
+                const moves = game.getLegalMovesForColor(game.currentPlayer);
+                if (moves.length === 0) {
+                    return { score: isMaximizing ? -9999 : 9999, move: null };
+                }
+
+                let bestMove = moves[0];
+
+                if (isMaximizing) {
+                    let maxEval = -Infinity;
+                    const topMoves = moves.slice(0, Math.min(moves.length, 10));
+                    for (const move of topMoves) {
+                        const sim = game.clone();
+                        const piece = sim.board[move.from.row][move.from.col];
+                        sim.board[move.to.row][move.to.col] = piece;
+                        sim.board[move.from.row][move.from.col] = 0;
+                        sim.currentPlayer = 3 - sim.currentPlayer;
+                        const result = this.minimax(sim, depth - 1, alpha, beta, false, player);
+                        if (result.score > maxEval) {
+                            maxEval = result.score;
+                            bestMove = move;
+                        }
+                        alpha = Math.max(alpha, maxEval);
+                        if (beta <= alpha) break;
+                    }
+                    return { score: maxEval, move: bestMove };
+                } else {
+                    let minEval = Infinity;
+                    const topMoves = moves.slice(0, Math.min(moves.length, 10));
+                    for (const move of topMoves) {
+                        const sim = game.clone();
+                        const piece = sim.board[move.from.row][move.from.col];
+                        sim.board[move.to.row][move.to.col] = piece;
+                        sim.board[move.from.row][move.from.col] = 0;
+                        sim.currentPlayer = 3 - sim.currentPlayer;
+                        const result = this.minimax(sim, depth - 1, alpha, beta, true, player);
+                        if (result.score < minEval) {
+                            minEval = result.score;
+                            bestMove = move;
+                        }
+                        beta = Math.min(beta, minEval);
+                        if (beta <= alpha) break;
+                    }
+                    return { score: minEval, move: bestMove };
+                }
+            }
+
+            async getMoveAsync(game, player) {
+                this.thinking = true;
+                const startTime = performance.now();
+
+                const moves = game.getLegalMovesForColor(player);
+                if (moves.length === 0) {
+                    this.thinking = false;
+                    return null;
+                }
+
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        const result = this.minimax(game, this.maxDepth, -Infinity, Infinity, true, player);
+                        const elapsed = performance.now() - startTime;
+                        console.log(`🤖 AI耗时: ${elapsed.toFixed(0)}ms`);
+                        this.thinking = false;
+                        resolve(result.move || moves[0]);
+                    }, 10);
+                });
+            }
+
+            isThinking() {
+                return this.thinking;
+            }
+
+            getLevelName() {
+                const names = { 0: '入门', 1: '中级', 2: '高级', 3: '专家' };
+                return names[this.level] || '中级';
+            }
+        }
+
+        // ============================================================
+        // 主游戏控制器
+        // ============================================================
+        class GameController {
+            constructor() {
+                this.canvas = document.getElementById('boardCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.game = new ChineseChessGame();
+                this.rankSystem = new RankSystem();
+                this.ai = new ChessAI(1);
+                this.mode = 'ai';
+                this.aiPlayer = 2;
+                this.humanPlayer = 1;
+                this.isAIThinking = false;
+
+                this.init();
+                this.render();
+                this.updateUI();
+
+                if (this.mode === 'ai' && this.aiPlayer === 1) {
+                    setTimeout(() => this.doAIMove(), 300);
+                }
+            }
+
+            init() {
+                this.canvas.addEventListener('click', (e) => this.onCanvasClick(e));
+
+                document.getElementById('newGameBtn').addEventListener('click', () => this.newGame());
+                document.getElementById('passBtn').addEventListener('click', () => this.pass());
+                document.getElementById('undoBtn').addEventListener('click', () => this.undo());
+                document.getElementById('resignBtn').addEventListener('click', () => this.resign());
+                document.getElementById('modalBtn').addEventListener('click', () => this.closeModal());
+
+                document.querySelectorAll('.mode-selector .btn[data-mode]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const mode = btn.dataset.mode;
+                        this.setMode(mode);
+                        document.querySelectorAll('.mode-selector .btn[data-mode]').forEach(b => b.classList.remove(
+                            'active'));
+                        btn.classList.add('active');
+                    });
+                });
+
+                document.querySelectorAll('.ai-level-selector .btn[data-level]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const level = parseInt(btn.dataset.level);
+                        this.ai.setLevel(level);
+                        document.querySelectorAll('.ai-level-selector .btn[data-level]').forEach(b => b.classList
+                            .remove('active'));
+                        btn.classList.add('active');
+                        document.getElementById('aiLevelDisplay').textContent = `🤖 难度: ${this.ai.getLevelName()}`;
+                        this.newGame();
+                    });
+                });
+
+                document.getElementById('createRoomBtn').addEventListener('click', () => this.createRoom());
+                document.getElementById('joinRoomBtn').addEventListener('click', () => this.joinRoom());
+                document.getElementById('leaveRoomBtn').addEventListener('click', () => this.leaveRoom());
+
+                this.setMode('ai');
+                document.querySelector('.mode-selector .btn[data-mode="ai"]')?.classList.add('active');
+            }
+
+            setMode(mode) {
+                this.mode = mode;
+                this.newGame();
+                if (mode === 'online') {
+                    document.getElementById('onlinePanel').classList.add('active');
+                } else {
+                    document.getElementById('onlinePanel').classList.remove('active');
+                }
+                this.updateUI();
+            }
+
+            newGame() {
+                this.game = new ChineseChessGame();
+                this.isAIThinking = false;
+                document.getElementById('thinkingDisplay').textContent = '';
+                this.render();
+                this.updateUI();
+                document.getElementById('modalOverlay').classList.remove('active');
+
+                if (this.mode === 'ai' && this.aiPlayer === 1) {
+                    setTimeout(() => this.doAIMove(), 300);
+                }
+            }
+
+            // ============================================================
+            // ✅ 点击处理
+            // ============================================================
+            async onCanvasClick(e) {
+                if (this.isAIThinking) return;
+                if (this.game.gameOver) return;
+                if (this.mode === 'ai' && this.game.currentPlayer !== this.humanPlayer) return;
+
+                const rect = this.canvas.getBoundingClientRect();
+                const scaleX = this.canvas.width / rect.width;
+                const scaleY = this.canvas.height / rect.height;
+
+                const x = (e.clientX - rect.left) * scaleX;
+                const y = (e.clientY - rect.top) * scaleY;
+
+                const col = Math.round(x / (this.canvas.width / 9) - 0.5);
+                const row = Math.round(y / (this.canvas.height / 10) - 0.5);
+
+                if (row < 0 || row >= 10 || col < 0 || col >= 9) return;
+
+                if (this.game.selectedPiece) {
+                    const isValid = this.game.validMoves.some(m => m.to.row === row && m.to.col === col);
+                    if (isValid) {
+                        const result = this.game.placeStone(row, col);
+                        if (result.success) {
+                            this.render();
+                            this.updateUI();
+                            this.checkGameEnd();
+
+                            if (this.mode === 'ai' && !this.game.gameOver && this.game.currentPlayer === this.aiPlayer) {
+                                this.isAIThinking = true;
+                                document.getElementById('thinkingDisplay').textContent = '🧠 AI思考中...';
+                                document.getElementById('thinkingDisplay').className = 'thinking';
+                                setTimeout(() => {
+                                    this.doAIMove();
+                                }, 100);
+                            }
+                            return;
+                        }
+                    }
+                    this.game.selectedPiece = null;
+                    this.game.validMoves = [];
+                    this.render();
+                    return;
+                }
+
+                const result = this.game.selectPiece(row, col);
+                if (result.success) {
+                    this.render();
+                }
+            }
+
+            // ============================================================
+            // ✅ AI走棋
+            // ============================================================
+            async doAIMove() {
+                if (this.game.currentPlayer !== this.aiPlayer) {
+                    this.isAIThinking = false;
+                    document.getElementById('thinkingDisplay').textContent = '';
+                    return;
+                }
+
+                if (this.game.gameOver) {
+                    this.isAIThinking = false;
+                    document.getElementById('thinkingDisplay').textContent = '';
+                    return;
+                }
+
+                this.isAIThinking = true;
+                document.getElementById('thinkingDisplay').textContent = '🧠 AI思考中...';
+                document.getElementById('thinkingDisplay').className = 'thinking';
+
+                const move = await this.ai.getMoveAsync(this.game, this.game.currentPlayer);
+
+                if (this.game.currentPlayer !== this.aiPlayer) {
+                    this.isAIThinking = false;
+                    document.getElementById('thinkingDisplay').textContent = '';
+                    return;
+                }
+
+                if (move) {
+                    this.game.selectedPiece = { row: move.from.row, col: move.from.col };
+                    this.game.validMoves = [move];
+                    const result = this.game.placeStone(move.to.row, move.to.col);
+                    if (result.success) {
+                        this.render();
+                        this.updateUI();
+                        this.checkGameEnd();
+                    }
+                } else {
+                    this.game.pass();
+                    this.render();
+                    this.updateUI();
+                    this.checkGameEnd();
+                }
+
+                this.isAIThinking = false;
+                document.getElementById('thinkingDisplay').textContent = '';
+
+                if (this.mode === 'ai' && !this.game.gameOver && this.game.currentPlayer === this.aiPlayer) {
+                    setTimeout(() => {
+                        this.doAIMove();
+                    }, 100);
+                } else {
+                    this.updateUI();
+                }
+            }
+
+            pass() {
+                if (this.isAIThinking) return;
+                if (this.game.gameOver) return;
+                if (this.mode === 'ai' && this.game.currentPlayer !== this.humanPlayer) return;
+
+                this.game.pass();
+                this.render();
+                this.updateUI();
+
+                if (this.mode === 'ai' && !this.game.gameOver && this.game.currentPlayer === this.aiPlayer) {
+                    this.isAIThinking = true;
+                    document.getElementById('thinkingDisplay').textContent = '🧠 AI思考中...';
+                    document.getElementById('thinkingDisplay').className = 'thinking';
+                    setTimeout(() => {
+                        this.doAIMove();
+                    }, 50);
+                }
+            }
+
+            undo() {
+                if (this.isAIThinking) return;
+                if (this.game.moveHistory.length === 0) return;
+
+                const steps = this.mode === 'ai' ? 2 : 1;
+                for (let i = 0; i < steps; i++) {
+                    if (this.game.moveHistory.length === 0) break;
+                    this.game.undo();
+                }
+                this.render();
+                this.updateUI();
+            }
+
+            resign() {
+                if (this.game.gameOver) return;
+                const result = this.game.resign();
+                if (result.success) {
+                    const winner = result.winner === 1 ? '红棋' : '黑棋';
+                    alert(`🏳️ ${winner} 获胜！`);
+                    this.rankSystem.recordGame('loss', this.mode === 'ai' ? 'AI' : '对手');
+                    this.render();
+                    this.updateUI();
+                }
+            }
+
+            // ============================================================
+            // ✅ 检查游戏结束 - 含将帅对面检测
+            // ============================================================
+            checkGameEnd() {
+                if (this.game.gameOver) {
+                    let winner = 0;
+
+                    // 1. 检查将帅是否被吃
+                    const redKing = this.game.findPiece(1);
+                    const blackKing = this.game.findPiece(8);
+
+                    if (!redKing) {
+                        winner = 2;
+                    } else if (!blackKing) {
+                        winner = 1;
+                    }
+
+                    // 2. 检查将帅对面
+                    if (winner === 0 && redKing && blackKing) {
+                        if (redKing.col === blackKing.col) {
+                            let blocked = false;
+                            const minR = Math.min(redKing.row, blackKing.row);
+                            const maxR = Math.max(redKing.row, blackKing.row);
+                            for (let r = minR + 1; r < maxR; r++) {
+                                if (this.game.board[r][redKing.col] !== 0) {
+                                    blocked = true;
+                                    break;
+                                }
+                            }
+                            if (!blocked) {
+                                // 将帅对面，当前走棋方输
+                                winner = 3 - this.game.currentPlayer;
+                            }
+                        }
+                    }
+
+                    // 3. 检查是否被将杀（无合法走法）
+                    if (winner === 0) {
+                        const currentColor = this.game.currentPlayer;
+                        const hasLegal = this.game.hasLegalMove(currentColor);
+                        if (!hasLegal) {
+                            winner = 3 - currentColor;
+                        }
+                    }
+
+                    // 4. 检查棋子数量
+                    if (winner === 0) {
+                        const score = { 1: 0, 2: 0 };
+                        for (let r = 0; r < 10; r++) {
+                            for (let c = 0; c < 9; c++) {
+                                const piece = this.game.board[r][c];
+                                if (piece !== 0) {
+                                    const color = this.game.getColor(piece);
+                                    score[color] = (score[color] || 0) + 1;
+                                }
+                            }
+                        }
+                        if (score[1] === 0) winner = 2;
+                        if (score[2] === 0) winner = 1;
+                    }
+
+                    let result = 'draw';
+                    let resultText = '平局';
+
+                    if (winner === 1) {
+                        result = 'win';
+                        resultText = this.mode === 'ai' ? '🎉 你赢了！' : '红棋胜！';
+                    } else if (winner === 2) {
+                        result = 'loss';
+                        resultText = this.mode === 'ai' ? 'AI赢了...' : '黑棋胜！';
+                    }
+
+                    if (result !== 'draw') {
+                        const opponentRank = this.mode === 'ai' ? 'AI' : '对手';
+                        const rankResult = this.rankSystem.recordGame(result, opponentRank);
+                        if (rankResult.promoted) {
+                            this.showModal('🎉 段位晋升！',
+                                `恭喜你从 ${rankResult.from} 晋升到 ${rankResult.to}！\nELO变化: +${rankResult.eloChange}`
+                            );
+                        }
+                    }
+
+                    this.updateUI();
+                    const rankStats = this.rankSystem.getStats();
+                    setTimeout(() => {
+                        if (result !== 'draw') {
+                            alert(`游戏结束！\n${resultText}\n当前段位: ${rankStats.rank}`);
+                        } else {
+                            alert(`游戏结束！平局\n当前段位: ${rankStats.rank}`);
+                        }
+                    }, 300);
+                }
+            }
+
+            createRoom() {
+                const roomId = 'ROOM-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+                document.getElementById('roomDisplay').textContent = roomId;
+                document.getElementById('onlinePanel').classList.add('active');
+                document.getElementById('connectionStatus').textContent = '🟡 等待对手...';
+                document.getElementById('connectionStatus').style.color = '#ff9800';
+                document.getElementById('playerCountDisplay').textContent = '玩家: 1/2';
+                document.getElementById('joinRoomInput').value = roomId;
+                alert(`房间已创建！\n房间号: ${roomId}\n等待对手加入...`);
+            }
+
+            joinRoom() {
+                const roomId = document.getElementById('joinRoomInput').value.trim();
+                if (!roomId) { alert('请输入房间号'); return; }
+                document.getElementById('roomDisplay').textContent = roomId;
+                document.getElementById('onlinePanel').classList.add('active');
+                document.getElementById('connectionStatus').textContent = '🟢 已连接';
+                document.getElementById('connectionStatus').style.color = '#4caf50';
+                document.getElementById('playerCountDisplay').textContent = '玩家: 2/2';
+                alert('已加入房间！开始对战吧！');
+            }
+
+            leaveRoom() {
+                document.getElementById('onlinePanel').classList.remove('active');
+                document.getElementById('roomDisplay').textContent = '未创建';
+                document.getElementById('connectionStatus').textContent = '未连接';
+                document.getElementById('connectionStatus').style.color = '#6b7a8f';
+                document.getElementById('playerCountDisplay').textContent = '玩家: 1/2';
+                this.setMode('ai');
+            }
+
+            // ============================================================
+            // 渲染
+            // ============================================================
+            render() {
+                const ctx = this.ctx;
+                const w = this.canvas.width;
+                const h = this.canvas.height;
+                const cellW = w / 9;
+                const cellH = h / 10;
+
+                ctx.fillStyle = '#d4a763';
+                ctx.fillRect(0, 0, w, h);
+
+                ctx.strokeStyle = '#5d3a1a';
+                ctx.lineWidth = 1.5;
+
+                for (let i = 0; i < 10; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(cellW / 2, i * cellH + cellH / 2);
+                    ctx.lineTo(w - cellW / 2, i * cellH + cellH / 2);
+                    ctx.stroke();
+                }
+
+                for (let i = 0; i < 9; i++) {
+                    if (i === 0 || i === 8) {
+                        ctx.beginPath();
+                        ctx.moveTo(i * cellW + cellW / 2, cellH / 2);
+                        ctx.lineTo(i * cellW + cellW / 2, h - cellH / 2);
+                        ctx.stroke();
+                    } else {
+                        ctx.beginPath();
+                        ctx.moveTo(i * cellW + cellW / 2, cellH / 2);
+                        ctx.lineTo(i * cellW + cellW / 2, 4.5 * cellH);
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.moveTo(i * cellW + cellW / 2, 5.5 * cellH);
+                        ctx.lineTo(i * cellW + cellW / 2, h - cellH / 2);
+                        ctx.stroke();
+                    }
+                }
+
+                ctx.beginPath();
+                ctx.moveTo(3 * cellW + cellW / 2, cellH / 2);
+                ctx.lineTo(5 * cellW + cellW / 2, 2 * cellH + cellH / 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(5 * cellW + cellW / 2, cellH / 2);
+                ctx.lineTo(3 * cellW + cellW / 2, 2 * cellH + cellH / 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(3 * cellW + cellW / 2, h - cellH / 2);
+                ctx.lineTo(5 * cellW + cellW / 2, h - 2 * cellH - cellH / 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(5 * cellW + cellW / 2, h - cellH / 2);
+                ctx.lineTo(3 * cellW + cellW / 2, h - 2 * cellH - cellH / 2);
+                ctx.stroke();
+
+                ctx.fillStyle = '#5d3a1a';
+                ctx.font = '24px serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('楚  河', w / 2 - 80, 4.5 * cellH + 10);
+                ctx.fillText('汉  界', w / 2 + 80, 4.5 * cellH + 10);
+
+                const pawnPositions = [
+                    [3, 0],
+                    [3, 2],
+                    [3, 4],
+                    [3, 6],
+                    [3, 8],
+                    [6, 0],
+                    [6, 2],
+                    [6, 4],
+                    [6, 6],
+                    [6, 8]
+                ];
+                for (const [r, c] of pawnPositions) {
+                    ctx.beginPath();
+                    ctx.arc(c * cellW + cellW / 2, r * cellH + cellH / 2, 4, 0, Math.PI * 2);
+                    ctx.fillStyle = '#5d3a1a';
+                    ctx.fill();
+                }
+
+                const cannonPositions = [
+                    [2, 1],
+                    [2, 7],
+                    [7, 1],
+                    [7, 7]
+                ];
+                for (const [r, c] of cannonPositions) {
+                    ctx.beginPath();
+                    ctx.arc(c * cellW + cellW / 2, r * cellH + cellH / 2, 6, 0, Math.PI * 2);
+                    ctx.fillStyle = '#5d3a1a';
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(c * cellW + cellW / 2, r * cellH + cellH / 2, 3, 0, Math.PI * 2);
+                    ctx.fillStyle = '#d4a763';
+                    ctx.fill();
+                }
+
+                const pieceSymbols = {
+                    1: '帅',
+                    2: '仕',
+                    3: '相',
+                    4: '马',
+                    5: '车',
+                    6: '炮',
+                    7: '兵',
+                    8: '将',
+                    9: '士',
+                    10: '象',
+                    11: '马',
+                    12: '车',
+                    13: '砲',
+                    14: '卒'
+                };
+
+                for (let r = 0; r < 10; r++) {
+                    for (let c = 0; c < 9; c++) {
+                        const piece = this.game.board[r][c];
+                        if (piece === 0) continue;
+
+                        const x = c * cellW + cellW / 2;
+                        const y = r * cellH + cellH / 2;
+                        const radius = Math.min(cellW, cellH) * 0.4;
+
+                        ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                        ctx.shadowBlur = 6;
+
+                        const gradient = ctx.createRadialGradient(x - 5, y - 5, 2, x, y, radius);
+                        gradient.addColorStop(0, '#f5e6c8');
+                        gradient.addColorStop(1, '#d4a763');
+                        ctx.beginPath();
+                        ctx.arc(x, y, radius, 0, Math.PI * 2);
+                        ctx.fillStyle = gradient;
+                        ctx.fill();
+                        ctx.shadowBlur = 0;
+
+                        ctx.strokeStyle = '#5d3a1a';
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+
+                        const color = this.game.getColor(piece);
+                        ctx.fillStyle = color === 1 ? '#cc0000' : '#222';
+                        ctx.font = `${radius * 1.4}px serif`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(pieceSymbols[piece] || '', x, y + 1);
+
+                        if (this.game.selectedPiece &&
+                            this.game.selectedPiece.row === r &&
+                            this.game.selectedPiece.col === c) {
+                            ctx.strokeStyle = '#4c6ef5';
+                            ctx.lineWidth = 3;
+                            ctx.beginPath();
+                            ctx.arc(x, y, radius + 4, 0, Math.PI * 2);
+                            ctx.stroke();
+                        }
+
+                        if (this.game.validMoves && this.game.validMoves.some(m => m.to.row === r && m.to.col === c)) {
+                            ctx.fillStyle = 'rgba(76, 110, 245, 0.3)';
+                            ctx.beginPath();
+                            ctx.arc(x, y, radius + 6, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+                }
+
+                if (this.game.validMoves) {
+                    for (const move of this.game.validMoves) {
+                        const x = move.to.col * cellW + cellW / 2;
+                        const y = move.to.row * cellH + cellH / 2;
+                        ctx.fillStyle = 'rgba(76, 110, 245, 0.5)';
+                        ctx.beginPath();
+                        ctx.arc(x, y, 8, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            }
+
+            updateUI() {
+                const rankStats = this.rankSystem.getStats();
+                const progress = this.rankSystem.getProgress();
+                const promotionReq = this.rankSystem.getPromotionRequirement();
+
+                document.getElementById('rankDisplay').textContent = `段位: ${rankStats.rank}`;
+                document.getElementById('scoreDisplay').textContent = `积分: ${rankStats.elo}`;
+                document.getElementById('seasonDisplay').textContent = `🏆 S${rankStats.season}`;
+                document.getElementById('aiLevelDisplay').textContent = `🤖 难度: ${this.ai.getLevelName()}`;
+
+                document.getElementById('currentRank').textContent = rankStats.rank;
+                document.getElementById('nextRank').textContent = promotionReq.to;
+                document.getElementById('rankProgress').textContent = `${rankStats.elo}/${rankStats.elo + promotionReq.required}`;
+                document.getElementById('winRate').textContent = `${rankStats.winRate}%`;
+
+                const turnText = this.game.gameOver ? '游戏结束' :
+                    this.game.currentPlayer === 1 ? '🔴 红棋走' : '⚫ 黑棋走';
+                document.getElementById('turnDisplay').textContent = turnText;
+                document.getElementById('moveDisplay').textContent = `步数: ${this.game.moveCount}`;
+                document.getElementById('capturedDisplay').textContent =
+                    `🔴 ${this.game.captured[1] || 0} ⚫ ${this.game.captured[2] || 0}`;
+
+                const now = new Date();
+                const seasonDate = new Date(2024, 8 + (rankStats.season - 1) * 3, 20);
+                document.getElementById('seasonTitle').textContent = `🏆 第 ${rankStats.season} 赛季`;
+                document.getElementById('seasonDate').textContent =
+                    `${seasonDate.getFullYear()}-${String(seasonDate.getMonth()+1).padStart(2,'0')}-${String(seasonDate.getDate()).padStart(2,'0')} 开启`;
+                document.getElementById('seasonEnd').textContent =
+                    `定段赛: 每月7号 · 下赛季 ${new Date(seasonDate.getFullYear(), seasonDate.getMonth() + 3, 20).toLocaleDateString('zh-CN')}`;
+
+                this.rankSystem.save();
+            }
+
+            showModal(title, message) {
+                document.getElementById('modalTitle').textContent = title;
+                document.getElementById('modalMessage').textContent = message;
+                document.getElementById('modalOverlay').classList.add('active');
+            }
+
+            closeModal() {
+                document.getElementById('modalOverlay').classList.remove('active');
+            }
+        }
+
+        // ============================================================
+        // 启动
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            const game = new GameController();
+
+            const resizeCanvas = () => {
+                const container = document.querySelector('.board-container');
+                const maxWidth = Math.min(container.clientWidth, 480);
+                if (maxWidth < 480) {
+                    game.canvas.style.width = maxWidth + 'px';
+                    game.canvas.style.height = (maxWidth / 450 * 500) + 'px';
+                } else {
+                    game.canvas.style.width = '480px';
+                    game.canvas.style.height = (480 / 450 * 500) + 'px';
+                }
+            };
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+        });
+    </script>
+</body>
+</html>

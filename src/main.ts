@@ -1,0 +1,570 @@
+import './style.css';
+import { auth } from './modules/auth';
+import { github } from './api/github';
+import { GAME_FILES } from './utils/helpers';
+import type { GameData } from './types';
+
+// ===== DOM 引用 =====
+const $ = (id: string) => document.getElementById(id);
+
+const topNav = $('topNav');
+const pageLogin = $('pageLogin');
+const pageStudio = $('pageStudio');
+const pageProfile = $('pageProfile');
+
+const loginId = $('loginId') as HTMLInputElement;
+const loginPwd = $('loginPwd') as HTMLInputElement;
+const loginBtn = $('loginBtn');
+const registerBtn = $('registerBtn');
+const loginMessage = $('loginMessage');
+const logoutBtn = $('logoutBtn');
+
+const navAvatar = $('navAvatar');
+const navUserName = $('navUserName');
+const showProfileBtn = $('showProfileBtn');
+const backToStudioBtn = $('backToStudioBtn');
+
+const menuAll = $('menuAll');
+const menuMy = $('menuMy');
+const menuAdmin = $('menuAdmin');
+const gameList = $('gameList');
+const gameCount = $('gameCount');
+const panelTitle = $('panelTitle');
+const panelCount = $('panelCount');
+const refreshBtn = $('refreshBtn');
+
+const modal = $('gameModal');
+const modalTitle = $('modalTitle');
+const gameFrame = $('gameFrame') as HTMLIFrameElement;
+const modalClose = $('modalClose');
+
+const avatarLarge = $('avatarLarge');
+const profileName = $('profileName');
+const profileId = $('profileId');
+const profileBio = $('profileBio');
+const roleBadge = $('roleBadge');
+const changeAvatarBtn = $('changeAvatarBtn');
+const avatarUpload = $('avatarUpload') as HTMLInputElement;
+const editBioBtn = $('editBioBtn');
+const refreshProfileBtn = $('refreshProfileBtn');
+const frameSelector = $('frameSelector');
+const adminPanel = $('adminPanel');
+const adminGameList = $('adminGameList');
+
+// ===== 状态 =====
+let currentFilter: 'all' | 'my' | 'admin' = 'all';
+let gameConfigs: GameData = {};
+let currentUser: any = null;
+let isReady = false;
+
+// ===== 页面切换 =====
+function showPage(page: 'login' | 'studio' | 'profile') {
+    pageLogin.style.display = page === 'login' ? 'block' : 'none';
+    pageStudio.style.display = page === 'studio' ? 'block' : 'none';
+    pageProfile.style.display = page === 'profile' ? 'block' : 'none';
+    topNav.style.display = page === 'login' ? 'none' : 'flex';
+}
+
+// ===== 认证 =====
+function showMessage(msg: string, type: 'success' | 'error' = 'success') {
+    if (loginMessage) {
+        loginMessage.textContent = msg;
+        loginMessage.className = 'login-message ' + type;
+        loginMessage.style.display = 'block';
+        setTimeout(() => {
+            loginMessage.style.display = 'none';
+        }, 3000);
+    }
+}
+
+// 登录
+loginBtn?.addEventListener('click', async () => {
+    const id = loginId.value.trim();
+    const pwd = loginPwd.value.trim();
+    if (!id || !pwd) {
+        showMessage('请输入ID和密码', 'error');
+        return;
+    }
+    const result = await auth.login(id, pwd);
+    showMessage(result.message, result.success ? 'success' : 'error');
+    if (result.success) {
+        currentUser = result.user;
+        isReady = true;
+        updateUI();
+        showPage('studio');
+        await loadGameConfigs();
+        renderGameList('all');
+    }
+});
+
+// 注册
+registerBtn?.addEventListener('click', async () => {
+    const id = loginId.value.trim();
+    const pwd = loginPwd.value.trim();
+    if (!id || !pwd) {
+        showMessage('请输入ID和密码', 'error');
+        return;
+    }
+    const result = await auth.register(id, pwd);
+    showMessage(result.message, result.success ? 'success' : 'error');
+    if (result.success) {
+        currentUser = result.user;
+        isReady = true;
+        updateUI();
+        showPage('studio');
+        await loadGameConfigs();
+        renderGameList('all');
+    }
+});
+
+// 退出
+logoutBtn?.addEventListener('click', () => {
+    auth.logout();
+    currentUser = null;
+    isReady = false;
+    showPage('login');
+    loginId.value = '';
+    loginPwd.value = '';
+});
+
+// 切换页面
+showProfileBtn?.addEventListener('click', () => {
+    showPage('profile');
+    updateProfileUI();
+});
+
+backToStudioBtn?.addEventListener('click', () => {
+    showPage('studio');
+    renderGameList(currentFilter);
+});
+
+// ===== 游戏工坊 =====
+async function loadGameConfigs() {
+    gameConfigs = await github.getAllGames() || {};
+    return gameConfigs;
+}
+
+function getGameList(filter: 'all' | 'my' | 'admin') {
+    const user = currentUser;
+    if (!user) return [];
+
+    const games = GAME_FILES.map(g => {
+        const config = gameConfigs[g.id];
+        return {
+            ...g,
+            enabled: config?.enabled ?? true,
+            whitelist: config?.whitelist ?? [],
+            blacklist: config?.blacklist ?? [],
+            authorId: config?.authorId ?? 'system'
+        };
+    });
+
+    if (filter === 'all') return games;
+    if (filter === 'my') {
+        return games.filter(g => {
+            if (!g.enabled) return false;
+            if (g.blacklist.includes(user.id)) return false;
+            if (g.whitelist.length > 0 && !g.whitelist.includes(user.id)) return false;
+            return true;
+        });
+    }
+    if (filter === 'admin') return games;
+    return [];
+}
+
+function renderGameList(filter: 'all' | 'my' | 'admin' = 'all') {
+    const games = getGameList(filter);
+    const user = currentUser;
+    
+    if (gameCount) gameCount.textContent = `${games.length} 个游戏`;
+    if (panelCount) panelCount.textContent = `${games.length} 个`;
+    
+    const titles = { all: '🎯 全部游戏', my: '📌 可游玩', admin: '⚙️ 管理游戏' };
+    if (panelTitle) panelTitle.textContent = titles[filter] || '游戏';
+
+    if (!gameList) return;
+
+    if (games.length === 0) {
+        gameList.innerHTML = `<div style="text-align:center;color:#6b7a8f;padding:40px 0;">${filter === 'my' ? '暂无可游玩的游戏' : '暂无游戏'}</div>`;
+        return;
+    }
+
+    gameList.innerHTML = games.map(g => {
+        const isAdmin = user?.isAdmin || false;
+        const status = g.enabled ? '🟢 开放' : '🔴 关闭';
+        
+        return `
+            <div class="game-item" data-game-id="${g.id}">
+                <div class="game-info">
+                    <h4>${g.cover || '🎮'} ${g.name}</h4>
+                    <p>${g.description || '无简介'} · ${status}</p>
+                </div>
+                <div class="game-actions">
+                    ${filter === 'admin' && isAdmin ? `
+                        <button class="btn btn-outline btn-sm toggle-btn" data-game="${g.id}">${g.enabled ? '🔴 关闭' : '🟢 开启'}</button>
+                        <button class="btn btn-outline btn-sm whitelist-btn" data-game="${g.id}">📋 白名单</button>
+                        <button class="btn btn-outline btn-sm blacklist-btn" data-game="${g.id}">🚫 黑名单</button>
+                    ` : ''}
+                    ${g.enabled ? `<button class="btn btn-primary btn-sm play-btn" data-game="${g.id}">▶️ 游玩</button>` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    // 事件绑定
+    document.querySelectorAll('.play-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = (e.target as HTMLElement).getAttribute('data-game');
+            if (id) openGame(id);
+        });
+    });
+
+    document.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const id = (e.target as HTMLElement).getAttribute('data-game');
+            if (id) {
+                const game = gameConfigs[id];
+                if (game) {
+                    const newEnabled = !game.enabled;
+                    const success = await github.updateGame(id, { enabled: newEnabled });
+                    if (success) {
+                        gameConfigs[id].enabled = newEnabled;
+                        renderGameList(currentFilter);
+                    }
+                }
+            }
+        });
+    });
+
+    document.querySelectorAll('.whitelist-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const id = (e.target as HTMLElement).getAttribute('data-game');
+            if (id && currentUser?.isAdmin) {
+                const game = gameConfigs[id];
+                if (game) {
+                    const current = game.whitelist?.join(', ') || '';
+                    const input = prompt('白名单 (玩家ID用逗号分隔):', current);
+                    if (input !== null) {
+                        const whitelist = input.split(',').map(s => s.trim()).filter(Boolean);
+                        const success = await github.updateGame(id, { whitelist });
+                        if (success) {
+                            gameConfigs[id].whitelist = whitelist;
+                            renderGameList(currentFilter);
+                        }
+                    }
+                }
+            }
+        });
+    });
+
+    document.querySelectorAll('.blacklist-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const id = (e.target as HTMLElement).getAttribute('data-game');
+            if (id && currentUser?.isAdmin) {
+                const game = gameConfigs[id];
+                if (game) {
+                    const current = game.blacklist?.join(', ') || '';
+                    const input = prompt('黑名单 (玩家ID用逗号分隔):', current);
+                    if (input !== null) {
+                        const blacklist = input.split(',').map(s => s.trim()).filter(Boolean);
+                        const success = await github.updateGame(id, { blacklist });
+                        if (success) {
+                            gameConfigs[id].blacklist = blacklist;
+                            renderGameList(currentFilter);
+                        }
+                    }
+                }
+            }
+        });
+    });
+}
+
+function openGame(gameId: string) {
+    const game = GAME_FILES.find(g => g.id === gameId);
+    if (!game) { alert('游戏不存在'); return; }
+
+    const config = gameConfigs[gameId];
+    if (config) {
+        const user = currentUser;
+        if (!user) return;
+        if (!config.enabled) { alert('该游戏已关闭'); return; }
+        if (config.blacklist?.includes(user.id)) { alert('你已被加入该游戏的黑名单'); return; }
+        if (config.whitelist?.length > 0 && !config.whitelist.includes(user.id)) {
+            alert('你没有权限游玩该游戏');
+            return;
+        }
+    }
+
+    if (modalTitle) modalTitle.textContent = game.name;
+    if (gameFrame) gameFrame.src = `/gameList/${game.file}`;
+    if (modal) modal.classList.remove('hidden');
+}
+
+modalClose?.addEventListener('click', () => {
+    if (modal) modal.classList.add('hidden');
+    if (gameFrame) gameFrame.src = 'about:blank';
+});
+
+modal?.addEventListener('click', (e) => {
+    if (e.target === modal) {
+        modal.classList.add('hidden');
+        if (gameFrame) gameFrame.src = 'about:blank';
+    }
+});
+
+// ===== 个人资料 =====
+function updateUI() {
+    const user = currentUser;
+    if (!user) return;
+    if (navAvatar) navAvatar.textContent = user.avatar || '👤';
+    if (navUserName) navUserName.textContent = user.name || '玩家';
+    updateProfileUI();
+}
+
+function updateProfileUI() {
+    const user = currentUser;
+    if (!user) return;
+    
+    const avatar = user.avatar || '👤';
+    const name = user.name || '玩家';
+    const bio = user.bio || '这个人很懒，什么都没写。';
+    const frame = user.frame || 'default';
+    
+    if (avatarLarge) {
+        avatarLarge.textContent = avatar;
+        const colors: Record<string, string> = { default: '#4c6ef5', gold: '#FFD700', diamond: '#b9f2ff', legend: '#ff6b6b' };
+        avatarLarge.style.borderColor = colors[frame] || '#4c6ef5';
+    }
+    if (profileName) profileName.textContent = name;
+    if (profileId) profileId.textContent = '#' + user.id;
+    if (profileBio) profileBio.textContent = bio;
+    if (roleBadge) {
+        roleBadge.textContent = user.isAdmin ? '👑 管理员' : '👤 玩家';
+        roleBadge.className = 'role-badge ' + (user.isAdmin ? 'admin' : '');
+    }
+    
+    document.querySelectorAll('.frame-item').forEach(el => {
+        const f = el.getAttribute('data-frame') || 'default';
+        el.classList.toggle('active', f === frame);
+        const hasPermission = f === 'default' || f === 'gold' || user.id === 'UID-ADMIN';
+        el.classList.toggle('locked', !hasPermission);
+    });
+    
+    if (adminPanel && user.isAdmin) {
+        adminPanel.classList.remove('hidden');
+        renderAdminGames();
+    } else if (adminPanel) {
+        adminPanel.classList.add('hidden');
+    }
+}
+
+async function renderAdminGames() {
+    if (!adminGameList) return;
+    const configs = await github.getAllGames();
+    const games = GAME_FILES.map(g => ({
+        ...g,
+        ...configs[g.id],
+        enabled: configs[g.id]?.enabled ?? true,
+        whitelist: configs[g.id]?.whitelist ?? [],
+        blacklist: configs[g.id]?.blacklist ?? []
+    }));
+
+    adminGameList.innerHTML = games.map(g => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #1f2836;flex-wrap:wrap;gap:8px;">
+            <div>
+                <strong>${g.cover} ${g.name}</strong>
+                <span style="font-size:12px;color:${g.enabled ? '#4caf50' : '#f44336'};margin-left:8px;">${g.enabled ? '🟢 开放' : '🔴 关闭'}</span>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <button class="btn btn-outline btn-sm toggle-admin" data-game="${g.id}">${g.enabled ? '关闭' : '开启'}</button>
+                <button class="btn btn-outline btn-sm whitelist-admin" data-game="${g.id}">📋 白名单</button>
+                <button class="btn btn-outline btn-sm blacklist-admin" data-game="${g.id}">🚫 黑名单</button>
+            </div>
+        </div>
+    `).join('');
+
+    document.querySelectorAll('.toggle-admin').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const id = (e.target as HTMLElement).getAttribute('data-game');
+            if (id) {
+                const configs = await github.getAllGames();
+                const game = configs[id];
+                if (game) {
+                    const newEnabled = !game.enabled;
+                    await github.updateGame(id, { enabled: newEnabled });
+                    renderAdminGames();
+                }
+            }
+        });
+    });
+
+    document.querySelectorAll('.whitelist-admin').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const id = (e.target as HTMLElement).getAttribute('data-game');
+            if (id) {
+                const configs = await github.getAllGames();
+                const game = configs[id];
+                if (game) {
+                    const current = game.whitelist?.join(', ') || '';
+                    const input = prompt('白名单 (玩家ID用逗号分隔):', current);
+                    if (input !== null) {
+                        const whitelist = input.split(',').map(s => s.trim()).filter(Boolean);
+                        await github.updateGame(id, { whitelist });
+                        renderAdminGames();
+                    }
+                }
+            }
+        });
+    });
+
+    document.querySelectorAll('.blacklist-admin').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const id = (e.target as HTMLElement).getAttribute('data-game');
+            if (id) {
+                const configs = await github.getAllGames();
+                const game = configs[id];
+                if (game) {
+                    const current = game.blacklist?.join(', ') || '';
+                    const input = prompt('黑名单 (玩家ID用逗号分隔):', current);
+                    if (input !== null) {
+                        const blacklist = input.split(',').map(s => s.trim()).filter(Boolean);
+                        await github.updateGame(id, { blacklist });
+                        renderAdminGames();
+                    }
+                }
+            }
+        });
+    });
+}
+
+// ===== 个人资料事件 =====
+changeAvatarBtn?.addEventListener('click', () => avatarUpload.click());
+
+avatarUpload?.addEventListener('change', async (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    const emojis = ['😊', '😎', '🤖', '👾', '🎮', '⭐', '🌈', '🔥', '💎', '🦊', '🐱', '🐉'];
+    const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+    if (currentUser) {
+        currentUser.avatar = randomEmoji;
+        await auth.saveToGit(currentUser);
+        updateUI();
+    }
+});
+
+editBioBtn?.addEventListener('click', () => {
+    if (!currentUser) return;
+    const newBio = prompt('请输入个人简介:', currentUser.bio || '');
+    if (newBio !== null) {
+        currentUser.bio = newBio;
+        auth.saveToGit(currentUser);
+        updateUI();
+    }
+});
+
+refreshProfileBtn?.addEventListener('click', async () => {
+    if (!currentUser) return;
+    const user = await auth.refreshFromGit();
+    if (user) {
+        currentUser = user;
+        updateUI();
+    }
+});
+
+frameSelector?.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (target.classList.contains('frame-item')) {
+        const frame = target.getAttribute('data-frame') || 'default';
+        if (currentUser) {
+            const hasPermission = frame === 'default' || frame === 'gold' || currentUser.id === 'UID-ADMIN';
+            if (!hasPermission) {
+                alert('您没有权限佩戴该头像框');
+                return;
+            }
+            currentUser.frame = frame;
+            auth.saveToGit(currentUser);
+            updateUI();
+        }
+    }
+});
+
+// ===== 菜单事件 =====
+menuAll?.addEventListener('click', () => {
+    menuAll.classList.add('active');
+    menuMy.classList.remove('active');
+    menuAdmin.classList.remove('active');
+    currentFilter = 'all';
+    renderGameList('all');
+});
+
+menuMy?.addEventListener('click', () => {
+    menuMy.classList.add('active');
+    menuAll.classList.remove('active');
+    menuAdmin.classList.remove('active');
+    currentFilter = 'my';
+    renderGameList('my');
+});
+
+menuAdmin?.addEventListener('click', () => {
+    if (!currentUser?.isAdmin) {
+        alert('只有管理员可以访问管理功能');
+        return;
+    }
+    menuAdmin.classList.add('active');
+    menuAll.classList.remove('active');
+    menuMy.classList.remove('active');
+    currentFilter = 'admin';
+    renderGameList('admin');
+});
+
+refreshBtn?.addEventListener('click', async () => {
+    await loadGameConfigs();
+    renderGameList(currentFilter);
+});
+
+// ===== 初始化 - 完全不使用 auth.init() =====
+async function init() {
+    console.log('🚀 应用初始化...');
+    
+    // 检查GitHub连接
+    if (!github.isConfigured()) {
+        console.warn('⚠️ GitHub未配置，请检查 .env 文件');
+        showPage('login');
+        return;
+    }
+    
+    const connected = await github.testConnection();
+    console.log(connected ? '✅ GitHub已连接' : '❌ GitHub连接失败');
+    
+    // 检查是否有保存的会话
+    const session = localStorage.getItem('gameSession');
+    if (session) {
+        try {
+            const { id, password } = JSON.parse(session);
+            if (id && password) {
+                const user = await github.getPlayer(id);
+                if (user && user.password === password) {
+                    currentUser = user;
+                    isReady = true;
+                    updateUI();
+                    showPage('studio');
+                    await loadGameConfigs();
+                    renderGameList('all');
+                    console.log('✅ 会话恢复成功');
+                    return;
+                }
+            }
+        } catch (e) {
+            console.warn('会话恢复失败:', e);
+        }
+        // 清除无效会话
+        localStorage.removeItem('gameSession');
+    }
+    
+    // 未登录，显示登录页面
+    showPage('login');
+    console.log('📱 显示登录页面');
+}
+
+// 启动应用
+init();
