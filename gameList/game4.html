@@ -21,7 +21,7 @@
             padding: 20px;
         }
         .game-container {
-            max-width: 850px;
+            max-width: 750px;
             width: 100%;
             background: #141a24;
             border-radius: 36px;
@@ -124,6 +124,9 @@
             cursor: pointer;
             max-width: 100%;
             height: auto;
+            width: 100%;
+            max-width: 500px;
+            aspect-ratio: 1/1;
         }
 
         .controls {
@@ -342,7 +345,6 @@
 </head>
 <body>
     <div class="game-container">
-        <!-- 头部 -->
         <div class="game-header">
             <div class="game-title">♟️ 围棋 · 段位赛</div>
             <div class="game-info">
@@ -353,7 +355,6 @@
             </div>
         </div>
 
-        <!-- 模式选择 -->
         <div class="mode-selector" id="modeSelector">
             <button class="btn btn-outline btn-sm active" data-mode="ai">🤖 AI对战</button>
             <button class="btn btn-outline btn-sm" data-mode="pvp">👥 单机双人</button>
@@ -367,7 +368,6 @@
             </div>
         </div>
 
-        <!-- 联机面板 -->
         <div class="online-panel" id="onlinePanel">
             <div class="room-info">
                 <div>
@@ -385,12 +385,10 @@
             <div style="margin-top:8px;font-size:12px;color:#6b7a8f;" id="connectionStatus">未连接</div>
         </div>
 
-        <!-- 棋盘 -->
         <div class="board-container">
-            <canvas id="boardCanvas" width="520" height="520"></canvas>
+            <canvas id="boardCanvas" width="500" height="500"></canvas>
         </div>
 
-        <!-- 控制按钮 -->
         <div class="controls">
             <button class="btn btn-primary" id="newGameBtn">🔄 新游戏</button>
             <button class="btn btn-success" id="passBtn">🙋 停一手</button>
@@ -398,7 +396,6 @@
             <button class="btn btn-danger" id="resignBtn">🏳️ 认输</button>
         </div>
 
-        <!-- 状态栏 -->
         <div class="status-bar">
             <span class="turn" id="turnDisplay">⚫ 黑棋落子</span>
             <span class="move-count" id="moveDisplay">步数: 0</span>
@@ -406,7 +403,6 @@
             <span id="thinkingDisplay"></span>
         </div>
 
-        <!-- 段位信息 -->
         <div class="rank-info" id="rankInfo">
             <div><span class="label">当前段位</span><br><span class="value" id="currentRank">无</span></div>
             <div><span class="label">下一段位</span><br><span class="value" id="nextRank">-</span></div>
@@ -414,15 +410,13 @@
             <div><span class="label">胜率</span><br><span class="value" id="winRate">0%</span></div>
         </div>
 
-        <!-- 赛季信息 -->
         <div class="season-info" id="seasonInfo">
             <span class="season-title" id="seasonTitle">🏆 第 1 赛季</span>
-            <span id="seasonDate">2024-09-20 开启</span>
-            <span id="seasonEnd">定段赛: 每月7号</span>
+            <span id="seasonDate">2026-08-14 开启</span>
+            <span id="seasonEnd">定段赛: 每月7号 · 90天/赛季</span>
         </div>
     </div>
 
-    <!-- 弹窗 -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal-box">
             <h3 id="modalTitle">🎉 段位晋升！</h3>
@@ -433,7 +427,7 @@
 
     <script>
         // ============================================================
-        // 围棋引擎 - 完整修复版
+        // 围棋引擎
         // ============================================================
         class GoGame {
             constructor(size = 19) {
@@ -447,7 +441,6 @@
                 this.gameOver = false;
                 this.moveCount = 0;
                 this.lastMove = null;
-                this.maxMoves = 400;
             }
 
             clone() {
@@ -456,20 +449,13 @@
                     g.board[r] = [...this.board[r]];
                 }
                 g.currentPlayer = this.currentPlayer;
-                g.moveHistory = this.moveHistory.map(m => ({
-                    row: m.row,
-                    col: m.col,
-                    color: m.color
-                }));
-                g.captured = {
-                    1: this.captured[1] || 0,
-                    2: this.captured[2] || 0
-                };
-                g.ko = this.ko ? { row: this.ko.row, col: this.ko.col } : null;
+                g.moveHistory = this.moveHistory.map(m => ({ ...m }));
+                g.captured = { ...this.captured };
+                g.ko = this.ko ? { ...this.ko } : null;
                 g.passes = this.passes;
                 g.gameOver = this.gameOver;
                 g.moveCount = this.moveCount;
-                g.lastMove = this.lastMove ? { row: this.lastMove.row, col: this.lastMove.col } : null;
+                g.lastMove = this.lastMove ? { ...this.lastMove } : null;
                 return g;
             }
 
@@ -599,24 +585,24 @@
                     return { success: false, message: '禁着点' };
                 }
 
-                if (captured === 1) {
-                    this.ko = { row: row, col: col };
-                } else {
-                    this.ko = null;
+                if (captured === 1 && this.ko) {
+                    const { row: kr, col: kc } = this.ko;
+                    if (kr === row && kc === col) {
+                        return { success: false, message: '劫争' };
+                    }
                 }
 
                 this.board = boardCopy;
-                this.captured[color] = (this.captured[color] || 0) + captured;
+                this.captured[color] += captured;
                 this.moveHistory.push({ row, col, color });
                 this.moveCount++;
                 this.lastMove = { row, col };
+                this.ko = null;
                 this.passes = 0;
                 this.currentPlayer = 3 - color;
 
-                // 检查是否达到最大步数
                 if (this.moveCount >= this.maxMoves) {
                     this.gameOver = true;
-                    return { success: true, message: '达到最大步数，游戏结束', gameOver: true };
                 }
 
                 return { success: true, message: '落子成功', captured };
@@ -735,7 +721,7 @@
         }
 
         // ============================================================
-        // 段位系统
+        // 围棋段位系统 - 赛季从2026-08-14开始，90天/赛季
         // ============================================================
         const RANK_LEVELS = [
             { name: '无', minScore: 0, maxScore: 99 },
@@ -783,7 +769,7 @@
                 this.losses = 0;
                 this.draws = 0;
                 this.season = 1;
-                this.seasonStart = new Date(2024, 8, 20);
+                this.seasonStart = new Date(2026, 7, 14);
                 this.lastRank = '无';
                 this.promotionHistory = [];
                 this.load();
@@ -861,47 +847,6 @@
                 };
             }
 
-            recordGame(result, opponentRank) {
-                this.gamesPlayed++;
-                let eloChange = 0;
-                const baseChange = 16;
-                const rankDiff = this.getRankIndex(opponentRank) - this.getRankIndex(this.getRank().name);
-                const expected = 1 / (1 + Math.pow(10, -rankDiff / 400));
-
-                if (result === 'win') {
-                    this.wins++;
-                    eloChange = Math.round(baseChange * (1 - expected));
-                    if (this.wins % 3 === 0) eloChange += 2;
-                } else if (result === 'loss') {
-                    this.losses++;
-                    eloChange = Math.round(-baseChange * expected);
-                } else {
-                    this.draws++;
-                    eloChange = Math.round(baseChange * (0.5 - expected));
-                }
-
-                const oldRank = this.getRank();
-                this.elo = Math.max(0, this.elo + eloChange);
-                const newRank = this.getRank();
-
-                if (newRank.name !== oldRank.name) {
-                    const isPromotion = this.getRankIndex(newRank.name) > this.getRankIndex(oldRank.name);
-                    this.promotionHistory.push({
-                        from: oldRank.name,
-                        to: newRank.name,
-                        date: new Date().toISOString(),
-                        type: isPromotion ? '晋升' : '降级'
-                    });
-                    if (isPromotion) {
-                        this.lastRank = newRank.name;
-                        this.save();
-                        return { promoted: true, from: oldRank.name, to: newRank.name, eloChange };
-                    }
-                }
-                this.save();
-                return { promoted: false, eloChange };
-            }
-
             getRankIndex(name) {
                 for (let i = 0; i < RANK_LEVELS.length; i++) {
                     if (RANK_LEVELS[i].name === name) return i;
@@ -909,19 +854,15 @@
                 return 0;
             }
 
+            // ✅ 赛季检测 - 90天/赛季
             checkSeason() {
                 const now = new Date();
-                const seasonMonths = [2, 5, 8, 11];
-                let currentSeason = 1;
-                let seasonStart = new Date(2024, 8, 20);
-
-                for (let i = 0; i < seasonMonths.length; i++) {
-                    const checkDate = new Date(2024, seasonMonths[i], 20);
-                    if (now >= checkDate) {
-                        currentSeason = i + 1;
-                        seasonStart = checkDate;
-                    }
-                }
+                const startDate = new Date(2026, 7, 14);
+                const daysPerSeason = 90;
+                const diffDays = Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+                const currentSeason = Math.max(1, Math.floor(diffDays / daysPerSeason) + 1);
+                const seasonStart = new Date(startDate);
+                seasonStart.setDate(seasonStart.getDate() + (currentSeason - 1) * daysPerSeason);
 
                 if (currentSeason > this.season) {
                     const currentRank = this.getRank();
@@ -963,6 +904,48 @@
                 this.save();
             }
 
+            // ✅ 平局判定
+            recordGame(result, opponentRank) {
+                this.gamesPlayed++;
+                let eloChange = 0;
+                const baseChange = 16;
+                const rankDiff = this.getRankIndex(opponentRank) - this.getRankIndex(this.getRank().name);
+                const expected = 1 / (1 + Math.pow(10, -rankDiff / 400));
+
+                if (result === 'win') {
+                    this.wins++;
+                    eloChange = Math.round(baseChange * (1 - expected));
+                    if (this.wins % 3 === 0) eloChange += 2;
+                } else if (result === 'loss') {
+                    this.losses++;
+                    eloChange = Math.round(-baseChange * expected);
+                } else if (result === 'draw') {
+                    this.draws++;
+                    eloChange = Math.round(baseChange * (0.5 - expected));
+                }
+
+                const oldRank = this.getRank();
+                this.elo = Math.max(0, this.elo + eloChange);
+                const newRank = this.getRank();
+
+                if (newRank.name !== oldRank.name) {
+                    const isPromotion = this.getRankIndex(newRank.name) > this.getRankIndex(oldRank.name);
+                    this.promotionHistory.push({
+                        from: oldRank.name,
+                        to: newRank.name,
+                        date: new Date().toISOString(),
+                        type: isPromotion ? '晋升' : '降级'
+                    });
+                    if (isPromotion) {
+                        this.lastRank = newRank.name;
+                        this.save();
+                        return { promoted: true, from: oldRank.name, to: newRank.name, eloChange };
+                    }
+                }
+                this.save();
+                return { promoted: false, eloChange };
+            }
+
             getStats() {
                 return {
                     elo: this.elo,
@@ -979,7 +962,7 @@
         }
 
         // ============================================================
-        // ★★★ 完整版围棋AI - 含绝杀检测与自动认输 ★★★
+        // AI引擎
         // ============================================================
         class GoAI {
             constructor(level = 1) {
@@ -987,8 +970,6 @@
                 this.simulations = this.getSimulations();
                 this.thinking = false;
                 this.maxMoves = 40;
-                this.checkInterval = 5;
-                this.stepsToSimulate = 8;
             }
 
             getSimulations() {
@@ -1005,174 +986,6 @@
                 this.level = level;
                 this.simulations = this.getSimulations();
             }
-
-            // ============================================================
-            // ✅ 绝杀检测：模拟未来N步，判断是否会被绝杀
-            // ============================================================
-            checkIfDead(game, player, steps = 8) {
-                const simGame = game.clone();
-                let aiCaptured = 0;
-                let opponentCaptured = 0;
-
-                for (let i = 0; i < steps; i++) {
-                    const legalMoves = simGame.getLegalMoves();
-                    if (legalMoves.length === 0) break;
-
-                    const currentPlayer = simGame.currentPlayer;
-                    let bestMove = null;
-
-                    if (currentPlayer === player) {
-                        bestMove = this.getBestMove(simGame, currentPlayer);
-                    } else {
-                        bestMove = this.getWorstMoveForAI(simGame, currentPlayer, player);
-                    }
-
-                    if (bestMove) {
-                        const result = simGame.placeStone(bestMove.row, bestMove.col);
-                        if (!result.success) {
-                            simGame.pass();
-                            continue;
-                        }
-                        if (result.captured > 0) {
-                            if (currentPlayer === player) {
-                                aiCaptured += result.captured;
-                            } else {
-                                opponentCaptured += result.captured;
-                            }
-                        }
-                    } else {
-                        simGame.pass();
-                    }
-
-                    // 检查是否被绝杀（AI被提掉很多子）
-                    if (opponentCaptured - aiCaptured > 5) {
-                        return { dead: true, reason: '被提掉太多棋子' };
-                    }
-
-                    // 检查是否被围死
-                    if (this.isTrapped(simGame, player)) {
-                        return { dead: true, reason: '被围死' };
-                    }
-                }
-
-                // 计算最终分数
-                const finalScore = simGame.calculateScore();
-                const totalAI = finalScore[player] || 0;
-                const totalOpponent = finalScore[3 - player] || 0;
-
-                // 如果AI分数明显低于对手（< 30%）
-                if (totalOpponent > 0 && totalAI < totalOpponent * 0.3) {
-                    return { dead: true, reason: `得分过低 (${totalAI} vs ${totalOpponent})` };
-                }
-
-                return { dead: false };
-            }
-
-            // ✅ 获取最佳落子（用于模拟）
-            getBestMove(game, player) {
-                const legalMoves = game.getLegalMoves();
-                if (legalMoves.length === 0) return null;
-
-                let bestScore = -Infinity;
-                let bestMove = legalMoves[0];
-
-                const topMoves = legalMoves.length > 15 ?
-                    legalMoves.slice(0, 15) : legalMoves;
-
-                for (const move of topMoves) {
-                    const simGame = game.clone();
-                    const result = simGame.placeStone(move.row, move.col);
-                    if (!result.success) continue;
-
-                    const score = this.getHeuristicScore(simGame, move, player);
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestMove = move;
-                    }
-                }
-
-                return bestMove;
-            }
-
-            // ✅ 获取对AI最不利的位置（模拟对手）
-            getWorstMoveForAI(game, currentPlayer, aiPlayer) {
-                const legalMoves = game.getLegalMoves();
-                if (legalMoves.length === 0) return null;
-
-                let worstScore = Infinity;
-                let worstMove = legalMoves[0];
-
-                const topMoves = legalMoves.length > 15 ?
-                    legalMoves.slice(0, 15) : legalMoves;
-
-                for (const move of topMoves) {
-                    const simGame = game.clone();
-                    const result = simGame.placeStone(move.row, move.col);
-                    if (!result.success) continue;
-
-                    const aiScore = this.evaluatePositionForPlayer(simGame, aiPlayer);
-                    if (aiScore < worstScore) {
-                        worstScore = aiScore;
-                        worstMove = move;
-                    }
-                }
-
-                return worstMove;
-            }
-
-            // ✅ 评估某个玩家的局势
-            evaluatePositionForPlayer(game, player) {
-                let score = 0;
-                const size = game.size;
-
-                let stoneCount = 0;
-                for (let r = 0; r < size; r++) {
-                    for (let c = 0; c < size; c++) {
-                        if (game.board[r][c] === player) stoneCount++;
-                        if (game.board[r][c] === 3 - player) score -= 0.5;
-                    }
-                }
-                score += stoneCount * 0.5;
-
-                const territory = game.calculateScore();
-                score += territory[player] || 0;
-                score -= (territory[3 - player] || 0) * 0.7;
-
-                score += (game.captured[player] || 0) * 2;
-                score -= (game.captured[3 - player] || 0) * 2;
-
-                return score;
-            }
-
-            // ✅ 检查AI是否被围死
-            isTrapped(game, player) {
-                let totalLiberties = 0;
-                const size = game.size;
-                const visited = new Set();
-
-                for (let r = 0; r < size; r++) {
-                    for (let c = 0; c < size; c++) {
-                        if (game.board[r][c] === player) {
-                            const key = `${r},${c}`;
-                            if (visited.has(key)) continue;
-
-                            const group = game.getGroup(r, c);
-                            for (const { row, col } of group) {
-                                visited.add(`${row},${col}`);
-                            }
-
-                            const liberties = game.countLibertiesFromBoard(game.board, group);
-                            totalLiberties += liberties;
-                        }
-                    }
-                }
-
-                return totalLiberties < 5 && game.moveCount > 50;
-            }
-
-            // ============================================================
-            // 主AI方法
-            // ============================================================
 
             async getMoveAsync(game, player) {
                 this.thinking = true;
@@ -1425,11 +1238,6 @@
                 this.blackPlayerName = '你';
                 this.whitePlayerName = 'AI';
 
-                // ✅ 绝杀检测相关
-                this.moveCountForCheck = 0;
-                this.checkInterval = 5;
-                this.consecutivePasses = 0;
-
                 this.init();
                 this.render();
                 this.updateUI();
@@ -1498,8 +1306,6 @@
                 this.game = new GoGame(this.size);
                 this.isAIThinking = false;
                 this.isMyTurn = true;
-                this.moveCountForCheck = 0;
-                this.consecutivePasses = 0;
                 this.render();
                 this.updateUI();
                 document.getElementById('modalOverlay').classList.remove('active');
@@ -1557,57 +1363,6 @@
                     return;
                 }
 
-                // ✅ 每5步检测一次绝杀
-                this.moveCountForCheck++;
-
-                if (this.moveCountForCheck % this.checkInterval === 0 && this.game.moveCount > 20) {
-                    const checkResult = this.ai.checkIfDead(this.game, this.aiPlayer, 8);
-
-                    if (checkResult.dead) {
-                        this.game.gameOver = true;
-                        this.isAIThinking = false;
-                        document.getElementById('thinkingDisplay').textContent = '';
-
-                        const winner = this.humanPlayer === 1 ? '黑棋' : '白棋';
-                        this.showModal('🏳️ AI认输',
-                            `AI 判断局势不利，选择认输！\n原因: ${checkResult.reason}\n🎉 ${winner} 获胜！`
-                        );
-
-                        this.rankSystem.recordGame('win', 'AI');
-                        this.updateUI();
-                        this.render();
-                        return;
-                    }
-                }
-
-                // ✅ 检查AI是否应该停手（棋盘快满时）
-                const emptyCount = this.game.board.flat().filter(c => c === 0).length;
-
-                if (emptyCount < 10 && this.game.moveCount > 100) {
-                    const result = this.game.pass();
-                    if (result.success) {
-                        this.consecutivePasses++;
-                        this.render();
-                        this.updateUI();
-                        this.checkGameEnd();
-                        this.isAIThinking = false;
-                        document.getElementById('thinkingDisplay').textContent = '';
-
-                        if (this.consecutivePasses >= 2) {
-                            this.checkGameEnd();
-                            return;
-                        }
-
-                        if (!this.game.gameOver && this.game.currentPlayer === this.aiPlayer) {
-                            setTimeout(() => this.doAIMove(), 300);
-                        }
-                        return;
-                    }
-                }
-
-                this.consecutivePasses = 0;
-
-                // 正常AI落子
                 const move = await this.ai.getMoveAsync(this.game, this.game.currentPlayer);
 
                 if (move) {
@@ -1704,7 +1459,7 @@
 
             checkGameEnd() {
                 if (this.game.gameOver) {
-                    const winner = this.game.getWinner();
+                    let winner = this.game.getWinner();
                     let result = 'draw';
                     let resultText = '平局';
 
@@ -1891,12 +1646,20 @@
                     `⚫ ${this.game.captured[1] || 0} ⚪ ${this.game.captured[2] || 0}`;
 
                 const now = new Date();
-                const seasonDate = new Date(2024, 8 + (rankStats.season - 1) * 3, 20);
+                const seasonDate = new Date(2026, 7, 14);
+                const daysPerSeason = 90;
+                const diffDays = Math.floor((now.getTime() - seasonDate.getTime()) / (1000 * 60 * 60 * 24));
+                const currentSeason = Math.max(1, Math.floor(diffDays / daysPerSeason) + 1);
+                const sStart = new Date(seasonDate);
+                sStart.setDate(sStart.getDate() + (currentSeason - 1) * daysPerSeason);
+                const sEnd = new Date(sStart);
+                sEnd.setDate(sEnd.getDate() + daysPerSeason);
+
                 document.getElementById('seasonTitle').textContent = `🏆 第 ${rankStats.season} 赛季`;
                 document.getElementById('seasonDate').textContent =
-                    `${seasonDate.getFullYear()}-${String(seasonDate.getMonth()+1).padStart(2,'0')}-${String(seasonDate.getDate()).padStart(2,'0')} 开启`;
+                    `${sStart.getFullYear()}-${String(sStart.getMonth()+1).padStart(2,'0')}-${String(sStart.getDate()).padStart(2,'0')} 开启`;
                 document.getElementById('seasonEnd').textContent =
-                    `定段赛: 每月7号 · 下赛季 ${new Date(seasonDate.getFullYear(), seasonDate.getMonth() + 3, 20).toLocaleDateString('zh-CN')}`;
+                    `定段赛: 每月7号 · 90天/赛季`;
 
                 this.rankSystem.save();
             }
@@ -1912,16 +1675,13 @@
             }
         }
 
-        // ============================================================
-        // 启动
-        // ============================================================
         document.addEventListener('DOMContentLoaded', () => {
             const game = new GameController();
 
             const resizeCanvas = () => {
                 const container = document.querySelector('.board-container');
-                const maxWidth = Math.min(container.clientWidth, 520);
-                if (maxWidth < 520) {
+                const maxWidth = Math.min(container.clientWidth, 500);
+                if (maxWidth < 500) {
                     game.canvas.style.width = maxWidth + 'px';
                     game.canvas.style.height = maxWidth + 'px';
                 } else {

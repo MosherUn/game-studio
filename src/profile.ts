@@ -3,6 +3,7 @@ import { auth } from './modules/auth';
 import { profile } from './modules/profile';
 import { github } from './api/github';
 import { GAME_FILES, showToast } from './utils/helpers';
+import type { RankEntry } from './types';
 
 const navAvatar = document.getElementById('navAvatar');
 const navUserName = document.getElementById('navUserName');
@@ -25,6 +26,8 @@ const frameSelector = document.getElementById('frameSelector');
 const adminPanel = document.getElementById('adminPanel');
 const adminGameList = document.getElementById('adminGameList');
 const myGameList = document.getElementById('myGameList');
+const chessRankList = document.getElementById('chessRankList');
+const goRankList = document.getElementById('goRankList');
 
 let currentUser: any = null;
 let initialized = false;
@@ -38,6 +41,47 @@ async function checkAuth() {
   }
   currentUser = user;
   return true;
+}
+
+// ✅ 加载排行榜
+async function loadRankLists() {
+  try {
+    // 象棋排行榜
+    if (chessRankList) {
+      const chessData = await auth.getRankList('chess');
+      if (chessData.length === 0) {
+        chessRankList.innerHTML = '<div style="color:#6b7a8f;font-size:14px;">暂无数据</div>';
+      } else {
+        chessRankList.innerHTML = chessData.slice(0, 10).map((entry, index) => `
+          <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #1f2836;font-size:13px;">
+            <span>${index + 1}. ${entry.playerName}</span>
+            <span style="color:#b388ff;">${entry.rank}</span>
+            <span style="color:#4caf50;">${entry.elo}分</span>
+            <span style="color:#6b7a8f;">${entry.winRate}%</span>
+          </div>
+        `).join('');
+      }
+    }
+
+    // 围棋排行榜
+    if (goRankList) {
+      const goData = await auth.getRankList('go');
+      if (goData.length === 0) {
+        goRankList.innerHTML = '<div style="color:#6b7a8f;font-size:14px;">暂无数据</div>';
+      } else {
+        goRankList.innerHTML = goData.slice(0, 10).map((entry, index) => `
+          <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #1f2836;font-size:13px;">
+            <span>${index + 1}. ${entry.playerName}</span>
+            <span style="color:#b388ff;">${entry.rank}</span>
+            <span style="color:#4caf50;">${entry.elo}分</span>
+            <span style="color:#6b7a8f;">${entry.winRate}%</span>
+          </div>
+        `).join('');
+      }
+    }
+  } catch (e) {
+    console.error('加载排行榜失败:', e);
+  }
 }
 
 function updateUI() {
@@ -89,6 +133,9 @@ function updateUI() {
   
   // 我的游戏
   updateMyGames();
+
+  // ✅ 加载排行榜
+  loadRankLists();
 }
 
 function updateMyGames() {
@@ -147,7 +194,7 @@ async function renderAdminGames() {
   });
 }
 
-// 改名功能
+// 改名
 changeNameBtn?.addEventListener('click', () => {
   if (renameModal) {
     newNameInput.value = currentUser?.name || '';
@@ -175,21 +222,19 @@ cancelNameBtn?.addEventListener('click', () => {
   renameModal?.classList.add('hidden');
 });
 
-// 点击外部关闭改名弹窗
 renameModal?.addEventListener('click', (e) => {
   if (e.target === renameModal) {
     renameModal.classList.add('hidden');
   }
 });
 
-// 回车确认改名
 newNameInput?.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') {
     confirmNameBtn?.click();
   }
 });
 
-// 其他功能
+// 换头像
 changeAvatarBtn?.addEventListener('click', () => avatarUpload.click());
 
 avatarUpload?.addEventListener('change', async (e) => {
@@ -203,6 +248,7 @@ avatarUpload?.addEventListener('change', async (e) => {
   showToast('头像已更换: ' + randomEmoji);
 });
 
+// 修改简介
 editBioBtn?.addEventListener('click', () => {
   if (!currentUser) return;
   const newBio = prompt('请输入个人简介:', currentUser.bio || '');
@@ -214,6 +260,7 @@ editBioBtn?.addEventListener('click', () => {
   }
 });
 
+// 刷新
 refreshBtn?.addEventListener('click', async () => {
   const user = await profile.refreshProfile();
   if (user) {
@@ -223,6 +270,7 @@ refreshBtn?.addEventListener('click', async () => {
   }
 });
 
+// 头像框
 frameSelector?.addEventListener('click', (e) => {
   const target = e.target as HTMLElement;
   if (target.classList.contains('frame-item')) {
@@ -236,6 +284,7 @@ frameSelector?.addEventListener('click', (e) => {
   }
 });
 
+// 退出
 logoutBtn?.addEventListener('click', () => {
   auth.logout();
   window.location.href = '/';

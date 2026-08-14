@@ -1,6 +1,6 @@
 import { github } from '../api/github';
 import { getLocalUsers, saveLocalUsers, getSession, saveSession, clearSession } from '../utils/helpers';
-import type { Player } from '../types';
+import type { Player, RankStats } from '../types';
 
 export class AuthModule {
   currentUser: Player | null = null;
@@ -41,6 +41,19 @@ export class AuthModule {
     const allPlayers = await github.getAllPlayers();
     const isFirst = Object.keys(allPlayers).length === 0;
 
+    // ✅ 初始化段位数据
+    const initRankStats = (): RankStats => ({
+      elo: 1000,
+      gamesPlayed: 0,
+      wins: 0,
+      losses: 0,
+      draws: 0,
+      season: 1,
+      seasonStart: new Date(2026, 7, 14).toISOString(),
+      lastRank: '无',
+      promotionHistory: []
+    });
+
     const user: Player = {
       id,
       password,
@@ -49,6 +62,8 @@ export class AuthModule {
       bio: '欢迎来到游戏工坊！',
       frame: 'default',
       isAdmin: isFirst,
+      chessRank: initRankStats(),
+      goRank: initRankStats(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -105,6 +120,27 @@ export class AuthModule {
 
   async saveToGit(user: Player): Promise<boolean> {
     return await github.savePlayer(user);
+  }
+
+  // ✅ 获取段位排行榜
+  async getRankList(gameType: 'chess' | 'go'): Promise<any[]> {
+    const allPlayers = await github.getAllPlayers();
+    const entries: any[] = [];
+    for (const [id, player] of Object.entries(allPlayers)) {
+      const rankData = gameType === 'chess' ? player.chessRank : player.goRank;
+      if (rankData && rankData.gamesPlayed > 0) {
+        entries.push({
+          playerId: id,
+          playerName: player.name || id,
+          rank: rankData.lastRank || '无',
+          elo: rankData.elo || 0,
+          games: rankData.gamesPlayed || 0,
+          winRate: rankData.gamesPlayed > 0 ? Math.round((rankData.wins / rankData.gamesPlayed) * 100) : 0
+        });
+      }
+    }
+    entries.sort((a, b) => b.elo - a.elo);
+    return entries;
   }
 }
 

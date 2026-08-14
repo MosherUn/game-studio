@@ -25,7 +25,6 @@
 
         <div class="profile-container">
             <div class="profile-card">
-                <!-- 头像和基本信息 -->
                 <div class="profile-header">
                     <div class="avatar-large" id="avatarLarge">👤</div>
                     <div class="profile-info">
@@ -36,20 +35,14 @@
                     </div>
                 </div>
 
-                <!-- 操作按钮 -->
                 <div class="profile-actions">
-                    <!-- 改名 -->
-                    <button class="btn btn-primary" id="changeNameBtn">✏️ 改名</button>
-                    <!-- 换头像 -->
                     <input type="file" id="avatarUpload" accept="image/*" style="display:none;" />
+                    <button class="btn btn-primary" id="changeNameBtn">✏️ 改名</button>
                     <button class="btn btn-outline" id="changeAvatarBtn">🖼️ 换头像</button>
-                    <!-- 修改简介 -->
                     <button class="btn btn-outline" id="editBioBtn">✏️ 简介</button>
-                    <!-- 刷新 -->
                     <button class="btn btn-outline" id="refreshBtn">🔄 刷新</button>
                 </div>
 
-                <!-- 改名弹窗 -->
                 <div id="renameModal" class="modal-overlay hidden">
                     <div class="modal-box">
                         <h3>✏️ 修改名字</h3>
@@ -62,7 +55,6 @@
                     </div>
                 </div>
 
-                <!-- 管理员面板 -->
                 <div id="adminPanel" class="profile-section hidden">
                     <h4>⚙️ 游戏管理</h4>
                     <div style="margin-top:12px;">
@@ -70,7 +62,6 @@
                     </div>
                 </div>
 
-                <!-- 头像框 -->
                 <div class="profile-section">
                     <h4>🎨 头像框</h4>
                     <div class="frame-selector" id="frameSelector">
@@ -81,7 +72,22 @@
                     </div>
                 </div>
 
-                <!-- 游戏统计 -->
+                <!-- ✅ 象棋排行榜 -->
+                <div class="profile-section">
+                    <h4>🏆 象棋段位排行榜</h4>
+                    <div id="chessRankList" style="margin-top:8px;max-height:200px;overflow-y:auto;">
+                        <div style="color:#6b7a8f;font-size:14px;">加载中...</div>
+                    </div>
+                </div>
+
+                <!-- ✅ 围棋排行榜 -->
+                <div class="profile-section">
+                    <h4>🏆 围棋段位排行榜</h4>
+                    <div id="goRankList" style="margin-top:8px;max-height:200px;overflow-y:auto;">
+                        <div style="color:#6b7a8f;font-size:14px;">加载中...</div>
+                    </div>
+                </div>
+
                 <div class="profile-section">
                     <h4>📊 我的游戏</h4>
                     <div id="myGameList" style="margin-top:8px;">

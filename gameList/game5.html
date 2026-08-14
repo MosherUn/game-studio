@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,6 +11,7 @@
             padding: 0;
             box-sizing: border-box;
         }
+
         body {
             background: #0b0e14;
             color: #e8edf5;
@@ -20,6 +22,7 @@
             font-family: system-ui, sans-serif;
             padding: 20px;
         }
+
         .game-container {
             max-width: 750px;
             width: 100%;
@@ -28,6 +31,7 @@
             padding: 24px;
             border: 1px solid #2a3340;
         }
+
         .game-header {
             display: flex;
             justify-content: space-between;
@@ -36,6 +40,7 @@
             gap: 12px;
             margin-bottom: 16px;
         }
+
         .game-title {
             font-size: 24px;
             font-weight: 700;
@@ -44,6 +49,7 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
+
         .game-info {
             display: flex;
             gap: 16px;
@@ -51,20 +57,24 @@
             font-size: 14px;
             color: #889bb5;
         }
+
         .game-info span {
             background: #1a212c;
             padding: 4px 14px;
             border-radius: 30px;
             border: 1px solid #2a3340;
         }
+
         .game-info .rank {
             color: #ff8a65;
             font-weight: 600;
         }
+
         .game-info .score {
             color: #4caf50;
             font-weight: 600;
         }
+
         .game-info .ai-level {
             color: #ff9800;
             font-weight: 600;
@@ -80,15 +90,18 @@
             border-radius: 30px;
             align-items: center;
         }
+
         .mode-selector .btn {
             padding: 6px 16px;
             font-size: 13px;
         }
+
         .mode-selector .btn.active {
             border-color: #4c6ef5;
             background: #2a3a5a;
             color: #fff;
         }
+
         .ai-level-selector {
             display: flex;
             gap: 4px;
@@ -96,15 +109,18 @@
             margin-left: auto;
             flex-wrap: wrap;
         }
+
         .ai-level-selector span {
             color: #6b7a8f;
             font-size: 12px;
             margin-right: 4px;
         }
+
         .ai-level-selector .btn {
             padding: 2px 10px;
             font-size: 11px;
         }
+
         .ai-level-selector .btn.active {
             border-color: #ff9800;
             background: #2a2a1a;
@@ -117,6 +133,7 @@
             margin: 12px 0;
             position: relative;
         }
+
         canvas {
             width: 100%;
             max-width: 480px;
@@ -135,6 +152,7 @@
             justify-content: center;
             margin-top: 12px;
         }
+
         .btn {
             padding: 8px 20px;
             border: none;
@@ -146,34 +164,42 @@
             color: #e8edf5;
             border: 1px solid #3f4b5e;
         }
+
         .btn:hover {
             transform: scale(0.95);
         }
+
         .btn-primary {
             background: #4c6ef5;
             border-color: #4c6ef5;
             color: white;
         }
+
         .btn-success {
             background: #2e7d32;
             border-color: #1b5e20;
             color: white;
         }
+
         .btn-danger {
             background: #d32f2f;
             border-color: #b71c1c;
             color: white;
         }
+
         .btn-outline {
             background: transparent;
         }
+
         .btn-outline:hover {
             background: #1e2632;
         }
+
         .btn:disabled {
             opacity: 0.4;
             cursor: not-allowed;
         }
+
         .btn-sm {
             padding: 4px 12px;
             font-size: 12px;
@@ -191,23 +217,29 @@
             gap: 8px;
             font-size: 14px;
         }
+
         .status-bar .turn {
             color: #ff8a65;
             font-weight: 600;
         }
+
         .status-bar .move-count {
             color: #6b7a8f;
         }
+
         .status-bar .thinking {
             color: #ff9800;
             font-weight: 600;
             animation: pulse 0.8s infinite;
         }
+
         @keyframes pulse {
+
             0%,
             100% {
                 opacity: 1;
             }
+
             50% {
                 opacity: 0.2;
             }
@@ -223,9 +255,11 @@
             border-radius: 16px;
             font-size: 13px;
         }
+
         .rank-info .label {
             color: #6b7a8f;
         }
+
         .rank-info .value {
             color: #e8edf5;
             font-weight: 600;
@@ -243,6 +277,7 @@
             flex-wrap: wrap;
             gap: 8px;
         }
+
         .season-info .season-title {
             color: #ff8a65;
             font-weight: 600;
@@ -261,9 +296,11 @@
             z-index: 1000;
             padding: 20px;
         }
+
         .modal-overlay.active {
             display: flex;
         }
+
         .modal-box {
             background: #141a24;
             border-radius: 36px;
@@ -273,16 +310,19 @@
             border: 1px solid #2a3340;
             text-align: center;
         }
+
         .modal-box h3 {
             font-size: 20px;
             margin-bottom: 12px;
         }
+
         .modal-box p {
             color: #889bb5;
             margin-bottom: 16px;
             font-size: 14px;
             white-space: pre-line;
         }
+
         .modal-box .btn {
             margin: 4px;
         }
@@ -294,9 +334,11 @@
             border-radius: 16px;
             display: none;
         }
+
         .online-panel.active {
             display: block;
         }
+
         .online-panel .room-info {
             display: flex;
             justify-content: space-between;
@@ -304,6 +346,7 @@
             flex-wrap: wrap;
             gap: 8px;
         }
+
         .online-panel input {
             background: #1a212c;
             border: 1px solid #2a3340;
@@ -313,6 +356,7 @@
             font-size: 13px;
             width: 150px;
         }
+
         .online-panel input::placeholder {
             color: #6b7a8f;
         }
@@ -321,27 +365,34 @@
             .game-container {
                 padding: 12px;
             }
+
             .game-title {
                 font-size: 18px;
             }
+
             .rank-info {
                 grid-template-columns: 1fr 1fr;
             }
+
             .status-bar {
                 font-size: 12px;
             }
+
             .mode-selector {
                 justify-content: center;
             }
+
             .ai-level-selector {
                 margin-left: 0;
             }
+
             .online-panel input {
                 width: 100px;
             }
         }
     </style>
 </head>
+
 <body>
     <div class="game-container">
         <div class="game-header">
@@ -1084,6 +1135,10 @@
             { name: '9段', minScore: 3400, maxScore: Infinity },
         ];
 
+        // ============================================================
+        // 象棋段位系统 - 赛季从2026-08-14开始，60天/赛季
+        // ============================================================
+
         class RankSystem {
             constructor() {
                 this.elo = 1000;
@@ -1092,7 +1147,7 @@
                 this.losses = 0;
                 this.draws = 0;
                 this.season = 1;
-                this.seasonStart = new Date(2024, 8, 20);
+                this.seasonStart = new Date(2026, 7, 14);
                 this.lastRank = '无';
                 this.promotionHistory = [];
                 this.load();
@@ -1166,49 +1221,8 @@
                     to: targetRank.name,
                     required: targetRank.minScore - this.elo,
                     progress: Math.min(100, Math.floor(((this.elo - current.minScore) / (targetRank.minScore - current.minScore)) *
-                    100))
+                        100))
                 };
-            }
-
-            recordGame(result, opponentRank) {
-                this.gamesPlayed++;
-                let eloChange = 0;
-                const baseChange = 16;
-                const rankDiff = this.getRankIndex(opponentRank) - this.getRankIndex(this.getRank().name);
-                const expected = 1 / (1 + Math.pow(10, -rankDiff / 400));
-
-                if (result === 'win') {
-                    this.wins++;
-                    eloChange = Math.round(baseChange * (1 - expected));
-                    if (this.wins % 3 === 0) eloChange += 2;
-                } else if (result === 'loss') {
-                    this.losses++;
-                    eloChange = Math.round(-baseChange * expected);
-                } else {
-                    this.draws++;
-                    eloChange = Math.round(baseChange * (0.5 - expected));
-                }
-
-                const oldRank = this.getRank();
-                this.elo = Math.max(0, this.elo + eloChange);
-                const newRank = this.getRank();
-
-                if (newRank.name !== oldRank.name) {
-                    const isPromotion = this.getRankIndex(newRank.name) > this.getRankIndex(oldRank.name);
-                    this.promotionHistory.push({
-                        from: oldRank.name,
-                        to: newRank.name,
-                        date: new Date().toISOString(),
-                        type: isPromotion ? '晋升' : '降级'
-                    });
-                    if (isPromotion) {
-                        this.lastRank = newRank.name;
-                        this.save();
-                        return { promoted: true, from: oldRank.name, to: newRank.name, eloChange };
-                    }
-                }
-                this.save();
-                return { promoted: false, eloChange };
             }
 
             getRankIndex(name) {
@@ -1218,19 +1232,15 @@
                 return 0;
             }
 
+            // ✅ 赛季检测 - 60天/赛季
             checkSeason() {
                 const now = new Date();
-                const seasonMonths = [2, 5, 8, 11];
-                let currentSeason = 1;
-                let seasonStart = new Date(2024, 8, 20);
-
-                for (let i = 0; i < seasonMonths.length; i++) {
-                    const checkDate = new Date(2024, seasonMonths[i], 20);
-                    if (now >= checkDate) {
-                        currentSeason = i + 1;
-                        seasonStart = checkDate;
-                    }
-                }
+                const startDate = new Date(2026, 7, 14);
+                const daysPerSeason = 60;
+                const diffDays = Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+                const currentSeason = Math.max(1, Math.floor(diffDays / daysPerSeason) + 1);
+                const seasonStart = new Date(startDate);
+                seasonStart.setDate(seasonStart.getDate() + (currentSeason - 1) * daysPerSeason);
 
                 if (currentSeason > this.season) {
                     const currentRank = this.getRank();
@@ -1270,6 +1280,48 @@
                     }
                 }
                 this.save();
+            }
+
+            // ✅ 平局判定
+            recordGame(result, opponentRank) {
+                this.gamesPlayed++;
+                let eloChange = 0;
+                const baseChange = 16;
+                const rankDiff = this.getRankIndex(opponentRank) - this.getRankIndex(this.getRank().name);
+                const expected = 1 / (1 + Math.pow(10, -rankDiff / 400));
+
+                if (result === 'win') {
+                    this.wins++;
+                    eloChange = Math.round(baseChange * (1 - expected));
+                    if (this.wins % 3 === 0) eloChange += 2;
+                } else if (result === 'loss') {
+                    this.losses++;
+                    eloChange = Math.round(-baseChange * expected);
+                } else if (result === 'draw') {
+                    this.draws++;
+                    eloChange = Math.round(baseChange * (0.5 - expected));
+                }
+
+                const oldRank = this.getRank();
+                this.elo = Math.max(0, this.elo + eloChange);
+                const newRank = this.getRank();
+
+                if (newRank.name !== oldRank.name) {
+                    const isPromotion = this.getRankIndex(newRank.name) > this.getRankIndex(oldRank.name);
+                    this.promotionHistory.push({
+                        from: oldRank.name,
+                        to: newRank.name,
+                        date: new Date().toISOString(),
+                        type: isPromotion ? '晋升' : '降级'
+                    });
+                    if (isPromotion) {
+                        this.lastRank = newRank.name;
+                        this.save();
+                        return { promoted: true, from: oldRank.name, to: newRank.name, eloChange };
+                    }
+                }
+                this.save();
+                return { promoted: false, eloChange };
             }
 
             getStats() {
@@ -2017,7 +2069,7 @@
                 const seasonDate = new Date(2024, 8 + (rankStats.season - 1) * 3, 20);
                 document.getElementById('seasonTitle').textContent = `🏆 第 ${rankStats.season} 赛季`;
                 document.getElementById('seasonDate').textContent =
-                    `${seasonDate.getFullYear()}-${String(seasonDate.getMonth()+1).padStart(2,'0')}-${String(seasonDate.getDate()).padStart(2,'0')} 开启`;
+                    `${seasonDate.getFullYear()}-${String(seasonDate.getMonth() + 1).padStart(2, '0')}-${String(seasonDate.getDate()).padStart(2, '0')} 开启`;
                 document.getElementById('seasonEnd').textContent =
                     `定段赛: 每月7号 · 下赛季 ${new Date(seasonDate.getFullYear(), seasonDate.getMonth() + 3, 20).toLocaleDateString('zh-CN')}`;
 
@@ -2057,4 +2109,5 @@
         });
     </script>
 </body>
+
 </html>
