@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 import type { PlayerData, GameData, Player, GameConfig } from '../types';
 
 export class GitHubAPI {
@@ -9,9 +11,9 @@ export class GitHubAPI {
   private branch: string = 'main';
 
   constructor() {
-    this.token = import.meta.env.VITE_GITHUB_TOKEN || '';
-    this.owner = import.meta.env.VITE_REPO_OWNER || '';
-    this.repo = import.meta.env.VITE_DATA_REPO || 'game-data';
+    this.token = (import.meta as any).env?.VITE_GITHUB_TOKEN || '';
+    this.owner = (import.meta as any).env?.VITE_REPO_OWNER || '';
+    this.repo = (import.meta as any).env?.VITE_DATA_REPO || 'game-data';
   }
 
   isConfigured(): boolean {
@@ -96,8 +98,25 @@ export class GitHubAPI {
     return await this.readData<PlayerData>(this.playerFile) || {};
   }
 
+  async getGameConfig(id: string): Promise<GameConfig | null> {
+    const data = await this.readData<GameData>(this.gameFile);
+    return data?.[id] || null;
+  }
+
   async getAllGames(): Promise<GameData> {
     return await this.readData<GameData>(this.gameFile) || {};
+  }
+
+  async saveGame(game: GameConfig): Promise<boolean> {
+    const data = await this.readData<GameData>(this.gameFile) || {};
+    data[game.id] = game;
+    return this.writeData(this.gameFile, data);
+  }
+
+  async deleteGame(gameId: string): Promise<boolean> {
+    const data = await this.readData<GameData>(this.gameFile) || {};
+    delete data[gameId];
+    return this.writeData(this.gameFile, data);
   }
 
   async updateGame(gameId: string, updates: Partial<GameConfig>): Promise<boolean> {

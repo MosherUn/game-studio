@@ -31,6 +31,17 @@ export function getPlayerId(): string {
   return session?.id || 'GUEST';
 }
 
+// ✅ showToast 函数
+export function showToast(message: string, type: 'success' | 'error' | 'info' = 'info') {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
 export const GAME_FILES = [
   { id: 'game1', name: '弹球大师', file: 'game1.html', cover: '🎯', description: '经典的弹球游戏' },
   { id: 'game2', name: '点击大师', file: 'game2.html', cover: '🖱️', description: '看看你能点多少下' },
@@ -57,7 +68,6 @@ export function getRankList(players: Record<string, any>, gameType: 'chess' | 'g
     }
   }
   
-  // 按ELO降序排列
   entries.sort((a, b) => b.elo - a.elo);
   return entries;
 }

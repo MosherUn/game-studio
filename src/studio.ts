@@ -2,7 +2,7 @@ import './style.css';
 import { auth } from './modules/auth';
 import { github } from './api/github';
 import { GAME_FILES, showToast } from './utils/helpers';
-import type { GameData } from './types';
+import type { GameData } from '../types';
 
 const navAvatar = document.getElementById('navAvatar');
 const navUserName = document.getElementById('navUserName');
@@ -26,7 +26,6 @@ let gameConfigs: GameData = {};
 let currentUser: any = null;
 let initialized = false;
 
-// 检查登录状态
 async function checkAuth() {
   const user = await auth.init();
   if (!user) {
@@ -111,7 +110,6 @@ function renderGameList(filter: 'all' | 'my' | 'admin' = 'all') {
     `;
   }).join('');
 
-  // 事件绑定
   document.querySelectorAll('.play-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const id = (e.target as HTMLElement).getAttribute('data-game');
@@ -188,34 +186,40 @@ modalClose?.addEventListener('click', () => {
   if (gameFrame) gameFrame.src = 'about:blank';
 });
 
-// 菜单切换
-menuAll?.addEventListener('click', () => {
-  menuAll.classList.add('active');
-  menuMy.classList.remove('active');
-  menuAdmin.classList.remove('active');
-  currentFilter = 'all';
-  renderGameList('all');
-});
+// 使用非空断言解决 null 检查
+if (menuAll) {
+  menuAll.addEventListener('click', () => {
+    menuAll.classList.add('active');
+    if (menuMy) menuMy.classList.remove('active');
+    if (menuAdmin) menuAdmin.classList.remove('active');
+    currentFilter = 'all';
+    renderGameList('all');
+  });
+}
 
-menuMy?.addEventListener('click', () => {
-  menuMy.classList.add('active');
-  menuAll.classList.remove('active');
-  menuAdmin.classList.remove('active');
-  currentFilter = 'my';
-  renderGameList('my');
-});
+if (menuMy) {
+  menuMy.addEventListener('click', () => {
+    menuMy.classList.add('active');
+    if (menuAll) menuAll.classList.remove('active');
+    if (menuAdmin) menuAdmin.classList.remove('active');
+    currentFilter = 'my';
+    renderGameList('my');
+  });
+}
 
-menuAdmin?.addEventListener('click', () => {
-  if (!currentUser?.isAdmin) {
-    showToast('只有管理员可以访问管理功能', 'error');
-    return;
-  }
-  menuAdmin.classList.add('active');
-  menuAll.classList.remove('active');
-  menuMy.classList.remove('active');
-  currentFilter = 'admin';
-  renderGameList('admin');
-});
+if (menuAdmin) {
+  menuAdmin.addEventListener('click', () => {
+    if (!currentUser?.isAdmin) {
+      showToast('只有管理员可以访问管理功能', 'error');
+      return;
+    }
+    menuAdmin.classList.add('active');
+    if (menuAll) menuAll.classList.remove('active');
+    if (menuMy) menuMy.classList.remove('active');
+    currentFilter = 'admin';
+    renderGameList('admin');
+  });
+}
 
 refreshBtn?.addEventListener('click', async () => {
   await loadGameConfigs();
@@ -228,7 +232,6 @@ logoutBtn?.addEventListener('click', () => {
   window.location.href = '/';
 });
 
-// 初始化
 async function init() {
   const ok = await checkAuth();
   if (!ok) return;

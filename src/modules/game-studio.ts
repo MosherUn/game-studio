@@ -1,25 +1,26 @@
-import { github } from '../api/github';
 import { auth } from './auth';
-import { generateId, getLocalUsers, saveLocalUsers } from '../utils/helpers';
-import type { GameConfig } from '../types';
+import { github } from '../api/github';
+import { getLocalUsers, saveLocalUsers, generateId } from '../utils/helpers';
+import type { GameConfig, Player } from '../types';
 
 export class GameStudio {
   currentGame: GameConfig | null = null;
   onGameChange: ((game: GameConfig | null) => void) | null = null;
 
   createGame(): GameConfig {
-    const id = 'GAME-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+    const id = generateId();
+    const user = auth.currentUser;
     const game: GameConfig = {
       id,
       name: '我的新游戏',
-      desc: '一个有趣的沙盒游戏',
+      description: '一个有趣的沙盒游戏',
       cover: '🎮',
       gallery: ['🖼️1', '🖼️2', '🖼️3'],
       whitelist: [],
       blacklist: [],
       apiConfig: 'https://api.example.com/game',
       code: `// 沙盒环境\nconst playerId = getPlayerId();\nconsole.log("玩家ID:", playerId);\n\n// 游戏逻辑\nfunction init() {\n  console.log("游戏启动!");\n}`,
-      authorId: auth.currentUser?.id || '',
+      authorId: user?.id || '',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -31,7 +32,9 @@ export class GameStudio {
   loadGame(gameId: string): GameConfig | null {
     const user = auth.currentUser;
     if (!user) return null;
-    const game = user.games?.[gameId];
+    const games = user.games;
+    if (!games) return null;
+    const game = games[gameId];
     if (game) {
       this.currentGame = game;
       this.onGameChange?.(game);
@@ -48,12 +51,10 @@ export class GameStudio {
     if (!user.games) user.games = {};
     user.games[game.id] = game;
 
-    // 保存到本地
     const localUsers = getLocalUsers();
     localUsers[user.id] = user;
     saveLocalUsers(localUsers);
 
-    // 异步同步到GitHub
     auth.saveToGit(user).then(success => {
       if (success) console.log('✅ 游戏已同步到GitHub');
       else console.warn('⚠️ 游戏同步到GitHub失败');
@@ -97,7 +98,7 @@ export class GameStudio {
     return this.currentGame?.code || '// 没有游戏代码';
   }
 
-  // 沙盒执行器 - 安全的代码执行环境
+  // 沙盒执行器
   executeSandbox(code: string, context: any): any {
     const sandbox = {
       console: {

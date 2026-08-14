@@ -41,7 +41,6 @@ export class AuthModule {
     const allPlayers = await github.getAllPlayers();
     const isFirst = Object.keys(allPlayers).length === 0;
 
-    // ✅ 初始化段位数据
     const initRankStats = (): RankStats => ({
       elo: 1000,
       gamesPlayed: 0,
@@ -122,16 +121,17 @@ export class AuthModule {
     return await github.savePlayer(user);
   }
 
-  // ✅ 获取段位排行榜
+  // ✅ 获取段位排行榜 - 修复类型问题
   async getRankList(gameType: 'chess' | 'go'): Promise<any[]> {
     const allPlayers = await github.getAllPlayers();
     const entries: any[] = [];
     for (const [id, player] of Object.entries(allPlayers)) {
-      const rankData = gameType === 'chess' ? player.chessRank : player.goRank;
+      const typedPlayer = player as Player;
+      const rankData = gameType === 'chess' ? typedPlayer.chessRank : typedPlayer.goRank;
       if (rankData && rankData.gamesPlayed > 0) {
         entries.push({
           playerId: id,
-          playerName: player.name || id,
+          playerName: typedPlayer.name || id,
           rank: rankData.lastRank || '无',
           elo: rankData.elo || 0,
           games: rankData.gamesPlayed || 0,

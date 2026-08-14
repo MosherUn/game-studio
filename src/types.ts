@@ -7,8 +7,8 @@ export interface Player {
   frame: 'default' | 'gold' | 'diamond' | 'legend';
   isAdmin: boolean;
   games?: Record<string, GameConfig>;
-  chessRank?: RankStats;  // 象棋段位数据
-  goRank?: RankStats;     // 围棋段位数据
+  chessRank?: RankStats;
+  goRank?: RankStats;
   createdAt: string;
   updatedAt: string;
 }
@@ -24,6 +24,7 @@ export interface GameConfig {
   apiConfig: string;
   code: string;
   authorId: string;
+  enabled?: boolean;  // ✅ 添加可选 enabled
   createdAt: string;
   updatedAt: string;
 }
@@ -54,4 +55,12 @@ export interface RankEntry {
   elo: number;
   games: number;
   winRate: number;
+}
+
+export interface PlayerData {
+  [id: string]: Player;
+}
+
+export interface GameData {
+  [gameId: string]: GameConfig;
 }

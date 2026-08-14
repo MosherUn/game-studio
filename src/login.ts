@@ -52,14 +52,12 @@ registerBtn?.addEventListener('click', async () => {
   }
 });
 
-// 检查是否已登录
 auth.init().then((user) => {
   if (user) {
     window.location.href = '/studio.html';
   }
 });
 
-// 检查GitHub连接
 if (github.isConfigured()) {
   github.testConnection().then(ok => {
     if (!ok) {

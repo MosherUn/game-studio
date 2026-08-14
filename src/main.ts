@@ -1,60 +1,60 @@
 import './style.css';
 import { auth } from './modules/auth';
+import { gameStudio } from './modules/game-studio';
+import { profile } from './modules/profile';
 import { github } from './api/github';
-import { GAME_FILES } from './utils/helpers';
-import type { GameData } from './types';
+import { getSession, getPlayerId, GAME_FILES, showToast } from './utils/helpers';
+import type { Player, GameConfig, GameData } from './types';
 
-// ===== DOM 引用 =====
-const $ = (id: string) => document.getElementById(id);
+// ===== DOM 引用（使用非空断言） =====
+const topNav = document.getElementById('topNav')!;
+const pageLogin = document.getElementById('pageLogin')!;
+const pageStudio = document.getElementById('pageStudio')!;
+const pageProfile = document.getElementById('pageProfile')!;
 
-const topNav = $('topNav');
-const pageLogin = $('pageLogin');
-const pageStudio = $('pageStudio');
-const pageProfile = $('pageProfile');
+const loginId = document.getElementById('loginId') as HTMLInputElement;
+const loginPwd = document.getElementById('loginPwd') as HTMLInputElement;
+const loginBtn = document.getElementById('loginBtn')!;
+const registerBtn = document.getElementById('registerBtn')!;
+const loginMessage = document.getElementById('loginMessage')!;
+const logoutBtn = document.getElementById('logoutBtn')!;
 
-const loginId = $('loginId') as HTMLInputElement;
-const loginPwd = $('loginPwd') as HTMLInputElement;
-const loginBtn = $('loginBtn');
-const registerBtn = $('registerBtn');
-const loginMessage = $('loginMessage');
-const logoutBtn = $('logoutBtn');
+const navAvatar = document.getElementById('navAvatar')!;
+const navUserName = document.getElementById('navUserName')!;
+const showProfileBtn = document.getElementById('showProfileBtn')!;
+const backToStudioBtn = document.getElementById('backToStudioBtn')!;
 
-const navAvatar = $('navAvatar');
-const navUserName = $('navUserName');
-const showProfileBtn = $('showProfileBtn');
-const backToStudioBtn = $('backToStudioBtn');
+const menuAll = document.getElementById('menuAll')!;
+const menuMy = document.getElementById('menuMy')!;
+const menuAdmin = document.getElementById('menuAdmin')!;
+const gameList = document.getElementById('gameList')!;
+const gameCount = document.getElementById('gameCount')!;
+const panelTitle = document.getElementById('panelTitle')!;
+const panelCount = document.getElementById('panelCount')!;
+const refreshBtn = document.getElementById('refreshBtn')!;
 
-const menuAll = $('menuAll');
-const menuMy = $('menuMy');
-const menuAdmin = $('menuAdmin');
-const gameList = $('gameList');
-const gameCount = $('gameCount');
-const panelTitle = $('panelTitle');
-const panelCount = $('panelCount');
-const refreshBtn = $('refreshBtn');
+const modal = document.getElementById('gameModal')!;
+const modalTitle = document.getElementById('modalTitle')!;
+const gameFrame = document.getElementById('gameFrame') as HTMLIFrameElement;
+const modalClose = document.getElementById('modalClose')!;
 
-const modal = $('gameModal');
-const modalTitle = $('modalTitle');
-const gameFrame = $('gameFrame') as HTMLIFrameElement;
-const modalClose = $('modalClose');
-
-const avatarLarge = $('avatarLarge');
-const profileName = $('profileName');
-const profileId = $('profileId');
-const profileBio = $('profileBio');
-const roleBadge = $('roleBadge');
-const changeAvatarBtn = $('changeAvatarBtn');
-const avatarUpload = $('avatarUpload') as HTMLInputElement;
-const editBioBtn = $('editBioBtn');
-const refreshProfileBtn = $('refreshProfileBtn');
-const frameSelector = $('frameSelector');
-const adminPanel = $('adminPanel');
-const adminGameList = $('adminGameList');
+const avatarLarge = document.getElementById('avatarLarge')!;
+const profileName = document.getElementById('profileName')!;
+const profileId = document.getElementById('profileId')!;
+const profileBio = document.getElementById('profileBio')!;
+const roleBadge = document.getElementById('roleBadge')!;
+const changeAvatarBtn = document.getElementById('changeAvatarBtn')!;
+const avatarUpload = document.getElementById('avatarUpload') as HTMLInputElement;
+const editBioBtn = document.getElementById('editBioBtn')!;
+const refreshProfileBtn = document.getElementById('refreshProfileBtn')!;
+const frameSelector = document.getElementById('frameSelector')!;
+const adminPanel = document.getElementById('adminPanel')!;
+const adminGameList = document.getElementById('adminGameList')!;
 
 // ===== 状态 =====
 let currentFilter: 'all' | 'my' | 'admin' = 'all';
 let gameConfigs: GameData = {};
-let currentUser: any = null;
+let currentUser: Player | null = null;
 let isReady = false;
 
 // ===== 页面切换 =====
@@ -67,18 +67,16 @@ function showPage(page: 'login' | 'studio' | 'profile') {
 
 // ===== 认证 =====
 function showMessage(msg: string, type: 'success' | 'error' = 'success') {
-    if (loginMessage) {
-        loginMessage.textContent = msg;
-        loginMessage.className = 'login-message ' + type;
-        loginMessage.style.display = 'block';
-        setTimeout(() => {
-            loginMessage.style.display = 'none';
-        }, 3000);
-    }
+    loginMessage.textContent = msg;
+    loginMessage.className = 'login-message ' + type;
+    loginMessage.style.display = 'block';
+    setTimeout(() => {
+        loginMessage.style.display = 'none';
+    }, 3000);
 }
 
 // 登录
-loginBtn?.addEventListener('click', async () => {
+loginBtn.addEventListener('click', async () => {
     const id = loginId.value.trim();
     const pwd = loginPwd.value.trim();
     if (!id || !pwd) {
@@ -88,7 +86,7 @@ loginBtn?.addEventListener('click', async () => {
     const result = await auth.login(id, pwd);
     showMessage(result.message, result.success ? 'success' : 'error');
     if (result.success) {
-        currentUser = result.user;
+        currentUser = result.user || null;
         isReady = true;
         updateUI();
         showPage('studio');
@@ -98,7 +96,7 @@ loginBtn?.addEventListener('click', async () => {
 });
 
 // 注册
-registerBtn?.addEventListener('click', async () => {
+registerBtn.addEventListener('click', async () => {
     const id = loginId.value.trim();
     const pwd = loginPwd.value.trim();
     if (!id || !pwd) {
@@ -108,7 +106,7 @@ registerBtn?.addEventListener('click', async () => {
     const result = await auth.register(id, pwd);
     showMessage(result.message, result.success ? 'success' : 'error');
     if (result.success) {
-        currentUser = result.user;
+        currentUser = result.user || null;
         isReady = true;
         updateUI();
         showPage('studio');
@@ -118,7 +116,7 @@ registerBtn?.addEventListener('click', async () => {
 });
 
 // 退出
-logoutBtn?.addEventListener('click', () => {
+logoutBtn.addEventListener('click', () => {
     auth.logout();
     currentUser = null;
     isReady = false;
@@ -128,12 +126,12 @@ logoutBtn?.addEventListener('click', () => {
 });
 
 // 切换页面
-showProfileBtn?.addEventListener('click', () => {
+showProfileBtn.addEventListener('click', () => {
     showPage('profile');
     updateProfileUI();
 });
 
-backToStudioBtn?.addEventListener('click', () => {
+backToStudioBtn.addEventListener('click', () => {
     showPage('studio');
     renderGameList(currentFilter);
 });
@@ -176,13 +174,11 @@ function renderGameList(filter: 'all' | 'my' | 'admin' = 'all') {
     const games = getGameList(filter);
     const user = currentUser;
     
-    if (gameCount) gameCount.textContent = `${games.length} 个游戏`;
-    if (panelCount) panelCount.textContent = `${games.length} 个`;
+    gameCount.textContent = `${games.length} 个游戏`;
+    panelCount.textContent = `${games.length} 个`;
     
     const titles = { all: '🎯 全部游戏', my: '📌 可游玩', admin: '⚙️ 管理游戏' };
-    if (panelTitle) panelTitle.textContent = titles[filter] || '游戏';
-
-    if (!gameList) return;
+    panelTitle.textContent = titles[filter] || '游戏';
 
     if (games.length === 0) {
         gameList.innerHTML = `<div style="text-align:center;color:#6b7a8f;padding:40px 0;">${filter === 'my' ? '暂无可游玩的游戏' : '暂无游戏'}</div>`;
@@ -211,7 +207,7 @@ function renderGameList(filter: 'all' | 'my' | 'admin' = 'all') {
         `;
     }).join('');
 
-    // 事件绑定
+    // 事件绑定 - 游玩
     document.querySelectorAll('.play-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const id = (e.target as HTMLElement).getAttribute('data-game');
@@ -219,6 +215,7 @@ function renderGameList(filter: 'all' | 'my' | 'admin' = 'all') {
         });
     });
 
+    // 事件绑定 - 切换开关 (管理员)
     document.querySelectorAll('.toggle-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             const id = (e.target as HTMLElement).getAttribute('data-game');
@@ -236,6 +233,7 @@ function renderGameList(filter: 'all' | 'my' | 'admin' = 'all') {
         });
     });
 
+    // 事件绑定 - 白名单管理 (管理员)
     document.querySelectorAll('.whitelist-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             const id = (e.target as HTMLElement).getAttribute('data-game');
@@ -257,6 +255,7 @@ function renderGameList(filter: 'all' | 'my' | 'admin' = 'all') {
         });
     });
 
+    // 事件绑定 - 黑名单管理 (管理员)
     document.querySelectorAll('.blacklist-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             const id = (e.target as HTMLElement).getAttribute('data-game');
@@ -281,43 +280,78 @@ function renderGameList(filter: 'all' | 'my' | 'admin' = 'all') {
 
 function openGame(gameId: string) {
     const game = GAME_FILES.find(g => g.id === gameId);
-    if (!game) { alert('游戏不存在'); return; }
+    if (!game) { showToast('游戏不存在', 'error'); return; }
 
     const config = gameConfigs[gameId];
     if (config) {
         const user = currentUser;
         if (!user) return;
-        if (!config.enabled) { alert('该游戏已关闭'); return; }
-        if (config.blacklist?.includes(user.id)) { alert('你已被加入该游戏的黑名单'); return; }
+        if (!config.enabled) { showToast('该游戏已关闭', 'error'); return; }
+        if (config.blacklist?.includes(user.id)) { showToast('你已被加入该游戏的黑名单', 'error'); return; }
         if (config.whitelist?.length > 0 && !config.whitelist.includes(user.id)) {
-            alert('你没有权限游玩该游戏');
+            showToast('你没有权限游玩该游戏', 'error');
             return;
         }
     }
 
-    if (modalTitle) modalTitle.textContent = game.name;
+    modalTitle.textContent = game.name;
     if (gameFrame) gameFrame.src = `/gameList/${game.file}`;
-    if (modal) modal.classList.remove('hidden');
+    modal.classList.remove('hidden');
 }
 
-modalClose?.addEventListener('click', () => {
-    if (modal) modal.classList.add('hidden');
+modalClose.addEventListener('click', () => {
+    modal.classList.add('hidden');
     if (gameFrame) gameFrame.src = 'about:blank';
 });
 
-modal?.addEventListener('click', (e) => {
+modal.addEventListener('click', (e) => {
     if (e.target === modal) {
         modal.classList.add('hidden');
         if (gameFrame) gameFrame.src = 'about:blank';
     }
 });
 
+// ===== 菜单事件 =====
+menuAll.addEventListener('click', () => {
+    menuAll.classList.add('active');
+    menuMy.classList.remove('active');
+    menuAdmin.classList.remove('active');
+    currentFilter = 'all';
+    renderGameList('all');
+});
+
+menuMy.addEventListener('click', () => {
+    menuMy.classList.add('active');
+    menuAll.classList.remove('active');
+    menuAdmin.classList.remove('active');
+    currentFilter = 'my';
+    renderGameList('my');
+});
+
+menuAdmin.addEventListener('click', () => {
+    if (!currentUser?.isAdmin) {
+        showToast('只有管理员可以访问管理功能', 'error');
+        return;
+    }
+    menuAdmin.classList.add('active');
+    menuAll.classList.remove('active');
+    menuMy.classList.remove('active');
+    currentFilter = 'admin';
+    renderGameList('admin');
+});
+
+refreshBtn.addEventListener('click', async () => {
+    await loadGameConfigs();
+    renderGameList(currentFilter);
+    showToast('已刷新', 'success');
+});
+
 // ===== 个人资料 =====
 function updateUI() {
     const user = currentUser;
     if (!user) return;
-    if (navAvatar) navAvatar.textContent = user.avatar || '👤';
-    if (navUserName) navUserName.textContent = user.name || '玩家';
+    navAvatar.textContent = user.avatar || '👤';
+    navUserName.textContent = user.name || '玩家';
     updateProfileUI();
 }
 
@@ -330,36 +364,34 @@ function updateProfileUI() {
     const bio = user.bio || '这个人很懒，什么都没写。';
     const frame = user.frame || 'default';
     
-    if (avatarLarge) {
-        avatarLarge.textContent = avatar;
-        const colors: Record<string, string> = { default: '#4c6ef5', gold: '#FFD700', diamond: '#b9f2ff', legend: '#ff6b6b' };
-        avatarLarge.style.borderColor = colors[frame] || '#4c6ef5';
-    }
-    if (profileName) profileName.textContent = name;
-    if (profileId) profileId.textContent = '#' + user.id;
-    if (profileBio) profileBio.textContent = bio;
-    if (roleBadge) {
-        roleBadge.textContent = user.isAdmin ? '👑 管理员' : '👤 玩家';
-        roleBadge.className = 'role-badge ' + (user.isAdmin ? 'admin' : '');
-    }
+    avatarLarge.textContent = avatar;
+    const colors: Record<string, string> = { default: '#4c6ef5', gold: '#FFD700', diamond: '#b9f2ff', legend: '#ff6b6b' };
+    avatarLarge.style.borderColor = colors[frame] || '#4c6ef5';
     
+    profileName.textContent = name;
+    profileId.textContent = '#' + user.id;
+    profileBio.textContent = bio;
+    roleBadge.textContent = user.isAdmin ? '👑 管理员' : '👤 玩家';
+    roleBadge.className = 'role-badge ' + (user.isAdmin ? 'admin' : '');
+    
+    // 头像框
     document.querySelectorAll('.frame-item').forEach(el => {
         const f = el.getAttribute('data-frame') || 'default';
         el.classList.toggle('active', f === frame);
-        const hasPermission = f === 'default' || f === 'gold' || user.id === 'UID-ADMIN';
+        const hasPermission = f === 'default' || f === 'gold' || user.id === 'UID-ADMIN' || user.isAdmin;
         el.classList.toggle('locked', !hasPermission);
     });
     
-    if (adminPanel && user.isAdmin) {
+    // 管理员面板
+    if (user.isAdmin) {
         adminPanel.classList.remove('hidden');
         renderAdminGames();
-    } else if (adminPanel) {
+    } else {
         adminPanel.classList.add('hidden');
     }
 }
 
 async function renderAdminGames() {
-    if (!adminGameList) return;
     const configs = await github.getAllGames();
     const games = GAME_FILES.map(g => ({
         ...g,
@@ -438,9 +470,9 @@ async function renderAdminGames() {
 }
 
 // ===== 个人资料事件 =====
-changeAvatarBtn?.addEventListener('click', () => avatarUpload.click());
+changeAvatarBtn.addEventListener('click', () => avatarUpload.click());
 
-avatarUpload?.addEventListener('change', async (e) => {
+avatarUpload.addEventListener('change', async (e) => {
     const file = (e.target as HTMLInputElement).files?.[0];
     if (!file) return;
     const emojis = ['😊', '😎', '🤖', '👾', '🎮', '⭐', '🌈', '🔥', '💎', '🦊', '🐱', '🐉'];
@@ -449,80 +481,50 @@ avatarUpload?.addEventListener('change', async (e) => {
         currentUser.avatar = randomEmoji;
         await auth.saveToGit(currentUser);
         updateUI();
+        showToast('头像已更换: ' + randomEmoji, 'success');
     }
 });
 
-editBioBtn?.addEventListener('click', () => {
+editBioBtn.addEventListener('click', () => {
     if (!currentUser) return;
     const newBio = prompt('请输入个人简介:', currentUser.bio || '');
     if (newBio !== null) {
         currentUser.bio = newBio;
         auth.saveToGit(currentUser);
         updateUI();
+        showToast('简介已更新', 'success');
     }
 });
 
-refreshProfileBtn?.addEventListener('click', async () => {
+refreshProfileBtn.addEventListener('click', async () => {
     if (!currentUser) return;
     const user = await auth.refreshFromGit();
     if (user) {
         currentUser = user;
         updateUI();
+        showToast('已刷新', 'success');
     }
 });
 
-frameSelector?.addEventListener('click', (e) => {
+frameSelector.addEventListener('click', (e) => {
     const target = e.target as HTMLElement;
     if (target.classList.contains('frame-item')) {
         const frame = target.getAttribute('data-frame') || 'default';
         if (currentUser) {
-            const hasPermission = frame === 'default' || frame === 'gold' || currentUser.id === 'UID-ADMIN';
+            const hasPermission = frame === 'default' || frame === 'gold' || currentUser.id === 'UID-ADMIN' || currentUser.isAdmin;
             if (!hasPermission) {
-                alert('您没有权限佩戴该头像框');
+                showToast('您没有权限佩戴该头像框', 'error');
                 return;
             }
-            currentUser.frame = frame;
+            currentUser.frame = frame as any;
             auth.saveToGit(currentUser);
             updateUI();
+            showToast('头像框已更换', 'success');
         }
     }
 });
 
-// ===== 菜单事件 =====
-menuAll?.addEventListener('click', () => {
-    menuAll.classList.add('active');
-    menuMy.classList.remove('active');
-    menuAdmin.classList.remove('active');
-    currentFilter = 'all';
-    renderGameList('all');
-});
-
-menuMy?.addEventListener('click', () => {
-    menuMy.classList.add('active');
-    menuAll.classList.remove('active');
-    menuAdmin.classList.remove('active');
-    currentFilter = 'my';
-    renderGameList('my');
-});
-
-menuAdmin?.addEventListener('click', () => {
-    if (!currentUser?.isAdmin) {
-        alert('只有管理员可以访问管理功能');
-        return;
-    }
-    menuAdmin.classList.add('active');
-    menuAll.classList.remove('active');
-    menuMy.classList.remove('active');
-    currentFilter = 'admin';
-    renderGameList('admin');
-});
-
-refreshBtn?.addEventListener('click', async () => {
-    await loadGameConfigs();
-    renderGameList(currentFilter);
-});
-
-// ===== 初始化 - 完全不使用 auth.init() =====
+// ===== 初始化 =====
 async function init() {
     console.log('🚀 应用初始化...');
     
@@ -537,10 +539,10 @@ async function init() {
     console.log(connected ? '✅ GitHub已连接' : '❌ GitHub连接失败');
     
     // 检查是否有保存的会话
-    const session = localStorage.getItem('gameSession');
+    const session = getSession();
     if (session) {
         try {
-            const { id, password } = JSON.parse(session);
+            const { id, password } = session;
             if (id && password) {
                 const user = await github.getPlayer(id);
                 if (user && user.password === password) {
