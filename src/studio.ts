@@ -2,7 +2,7 @@ import './style.css';
 import { auth } from './modules/auth';
 import { github } from './api/github';
 import { GAME_FILES, showToast } from './utils/helpers';
-import type { GameData } from '../types';
+import type { GameData } from './types';  // ✅ 修复：使用 ./types 而不是 ../types
 
 const navAvatar = document.getElementById('navAvatar');
 const navUserName = document.getElementById('navUserName');
