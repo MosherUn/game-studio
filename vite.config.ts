@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
 export default defineConfig({
-  base: '/game-studio/',
+  base: '/game-studio/',  // ✅ 必须和仓库名一致
   server: {
     port: 6010,
     open: true
