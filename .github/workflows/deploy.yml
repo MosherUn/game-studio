@@ -19,6 +19,13 @@ jobs:
         with:
           node-version: 22
 
+      - name: Create .env file from Secrets
+        run: |
+          echo "VITE_GITHUB_TOKEN=${{ secrets.VITE_GITHUB_TOKEN }}" > .env
+          echo "VITE_REPO_OWNER=MosherUn" >> .env
+          echo "VITE_DATA_REPO=game-data" >> .env
+          echo "✅ .env 文件已创建"
+
       - name: Install dependencies
         run: npm install
 
