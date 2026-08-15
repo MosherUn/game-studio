@@ -1095,8 +1095,9 @@
         }
 
         // ============================================================
-        // 段位系统
+        // 象棋段位系统 - 完整版
         // ============================================================
+
         const RANK_LEVELS = [
             { name: '无', minScore: 0, maxScore: 99 },
             { name: '25级', minScore: 100, maxScore: 199 },
@@ -1134,10 +1135,6 @@
             { name: '8段', minScore: 3300, maxScore: 3399 },
             { name: '9段', minScore: 3400, maxScore: Infinity },
         ];
-
-        // ============================================================
-        // 象棋段位系统 - 赛季从2026-08-14开始，60天/赛季
-        // ============================================================
 
         class RankSystem {
             constructor() {
@@ -1177,7 +1174,43 @@
                         lastRank: this.lastRank,
                         promotionHistory: this.promotionHistory
                     }));
-                } catch (e) { console.warn('保存段位数据失败:', e); }
+
+                    // ✅ 同步到GitHub
+                    if (window.parent && window.parent !== window) {
+                        let playerId = 'GUEST';
+                        try {
+                            const session = localStorage.getItem('gameSession');
+                            if (session) {
+                                const parsed = JSON.parse(session);
+                                if (parsed && parsed.id) {
+                                    playerId = parsed.id;
+                                }
+                            }
+                        } catch (e) {
+                            console.warn('获取玩家ID失败:', e);
+                        }
+
+                        window.parent.postMessage({
+                            type: 'updateRank',
+                            game: 'chess',
+                            playerId: playerId,
+                            data: {
+                                elo: this.elo,
+                                gamesPlayed: this.gamesPlayed,
+                                wins: this.wins,
+                                losses: this.losses,
+                                draws: this.draws,
+                                season: this.season,
+                                seasonStart: this.seasonStart,
+                                lastRank: this.lastRank,
+                                promotionHistory: this.promotionHistory || []
+                            }
+                        }, '*');
+                        console.log('📤 象棋段位数据已同步到GitHub');
+                    }
+                } catch (e) {
+                    console.warn('保存段位数据失败:', e);
+                }
             }
 
             getRank() {
@@ -1220,8 +1253,7 @@
                     from: current.name,
                     to: targetRank.name,
                     required: targetRank.minScore - this.elo,
-                    progress: Math.min(100, Math.floor(((this.elo - current.minScore) / (targetRank.minScore - current.minScore)) *
-                        100))
+                    progress: Math.min(100, Math.floor(((this.elo - current.minScore) / (targetRank.minScore - current.minScore)) * 100))
                 };
             }
 
@@ -1232,7 +1264,6 @@
                 return 0;
             }
 
-            // ✅ 赛季检测 - 60天/赛季
             checkSeason() {
                 const now = new Date();
                 const startDate = new Date(2026, 7, 14);
@@ -1282,7 +1313,6 @@
                 this.save();
             }
 
-            // ✅ 平局判定
             recordGame(result, opponentRank) {
                 this.gamesPlayed++;
                 let eloChange = 0;
