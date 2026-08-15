@@ -41,10 +41,35 @@ async function checkAuth() {
   return true;
 }
 
+// ============================================================
+// ✅ 从 GitHub 加载排行榜数据
+// ============================================================
+
 async function loadRankLists() {
   try {
+    // 从 GitHub 获取所有玩家数据
+    const allPlayers = await github.getAllPlayers();
+    
+    // 象棋排行榜
     if (chessRankList) {
-      const chessData = await auth.getRankList('chess');
+      const chessData: any[] = [];
+      for (const [id, player] of Object.entries(allPlayers)) {
+        const typedPlayer = player as any;
+        const rankData = typedPlayer.chessRank;
+        if (rankData && rankData.gamesPlayed > 0) {
+          chessData.push({
+            playerId: id,
+            playerName: typedPlayer.name || id,
+            rank: rankData.lastRank || '无',
+            elo: rankData.elo || 0,
+            games: rankData.gamesPlayed || 0,
+            winRate: rankData.gamesPlayed > 0 ? 
+              Math.round((rankData.wins / rankData.gamesPlayed) * 100) : 0
+          });
+        }
+      }
+      chessData.sort((a, b) => b.elo - a.elo);
+      
       if (chessData.length === 0) {
         chessRankList.innerHTML = '<div style="color:#6b7a8f;font-size:14px;">暂无数据</div>';
       } else {
@@ -59,8 +84,26 @@ async function loadRankLists() {
       }
     }
 
+    // 围棋排行榜
     if (goRankList) {
-      const goData = await auth.getRankList('go');
+      const goData: any[] = [];
+      for (const [id, player] of Object.entries(allPlayers)) {
+        const typedPlayer = player as any;
+        const rankData = typedPlayer.goRank;
+        if (rankData && rankData.gamesPlayed > 0) {
+          goData.push({
+            playerId: id,
+            playerName: typedPlayer.name || id,
+            rank: rankData.lastRank || '无',
+            elo: rankData.elo || 0,
+            games: rankData.gamesPlayed || 0,
+            winRate: rankData.gamesPlayed > 0 ? 
+              Math.round((rankData.wins / rankData.gamesPlayed) * 100) : 0
+          });
+        }
+      }
+      goData.sort((a, b) => b.elo - a.elo);
+      
       if (goData.length === 0) {
         goRankList.innerHTML = '<div style="color:#6b7a8f;font-size:14px;">暂无数据</div>';
       } else {
@@ -76,6 +119,8 @@ async function loadRankLists() {
     }
   } catch (e) {
     console.error('加载排行榜失败:', e);
+    if (chessRankList) chessRankList.innerHTML = '<div style="color:#f44336;font-size:14px;">加载失败，请刷新</div>';
+    if (goRankList) goRankList.innerHTML = '<div style="color:#f44336;font-size:14px;">加载失败，请刷新</div>';
   }
 }
 

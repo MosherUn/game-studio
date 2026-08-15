@@ -178,7 +178,7 @@ function openGame(gameId: string) {
   }
 
   if (modalTitle) modalTitle.textContent = game.name;
-  // ✅ 修复：使用完整的子路径
+  // ✅ 使用完整子路径
   if (gameFrame) gameFrame.src = `/game-studio/gameList/${game.file}`;
   if (modal) modal.classList.remove('hidden');
 }
@@ -244,3 +244,67 @@ async function init() {
 }
 
 init();
+
+// ============================================================
+// ✅ 监听来自游戏 iframe 的段位数据同步消息
+// ============================================================
+
+window.addEventListener('message', async (event) => {
+  // 验证消息来源
+  if (event.origin !== window.location.origin) return;
+  
+  const data = event.data;
+  if (data.type === 'updateRank') {
+    console.log('📥 收到段位数据同步请求:', data);
+    
+    try {
+      // 获取当前用户
+      const user = await auth.init();
+      if (!user) {
+        console.warn('⚠️ 未登录，无法保存段位数据');
+        return;
+      }
+      
+      // 更新用户的段位数据
+      if (data.game === 'go') {
+        user.goRank = {
+          elo: data.data.elo,
+          gamesPlayed: data.data.gamesPlayed,
+          wins: data.data.wins,
+          losses: data.data.losses,
+          draws: data.data.draws,
+          season: data.data.season,
+          seasonStart: data.data.seasonStart,
+          lastRank: data.data.lastRank,
+          promotionHistory: data.data.promotionHistory || []
+        };
+        console.log('✅ 围棋段位数据已更新');
+      } else if (data.game === 'chess') {
+        user.chessRank = {
+          elo: data.data.elo,
+          gamesPlayed: data.data.gamesPlayed,
+          wins: data.data.wins,
+          losses: data.data.losses,
+          draws: data.data.draws,
+          season: data.data.season,
+          seasonStart: data.data.seasonStart,
+          lastRank: data.data.lastRank,
+          promotionHistory: data.data.promotionHistory || []
+        };
+        console.log('✅ 象棋段位数据已更新');
+      }
+      
+      // 保存到 GitHub
+      const success = await auth.saveToGit(user);
+      if (success) {
+        console.log('✅ 段位数据已保存到GitHub');
+        showToast('段位数据已同步', 'success');
+      } else {
+        console.warn('⚠️ 段位数据保存到GitHub失败');
+        showToast('同步失败，请检查网络', 'error');
+      }
+    } catch (error) {
+      console.error('❌ 保存段位数据异常:', error);
+    }
+  }
+});
