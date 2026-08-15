@@ -11,9 +11,10 @@ export class GitHubAPI {
   private branch: string = 'main';
 
   constructor() {
-    this.token = (import.meta as any).env?.VITE_GITHUB_TOKEN || '';
-    this.owner = (import.meta as any).env?.VITE_REPO_OWNER || '';
-    this.repo = (import.meta as any).env?.VITE_DATA_REPO || 'game-data';
+    // ✅ 确保正确读取 Token
+    this.token = import.meta.env.VITE_GITHUB_TOKEN || '';
+    this.owner = import.meta.env.VITE_REPO_OWNER || '';
+    this.repo = import.meta.env.VITE_DATA_REPO || 'game-data';
   }
 
   isConfigured(): boolean {
