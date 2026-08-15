@@ -6,7 +6,7 @@ import { github } from './api/github';
 import { getSession, getPlayerId, GAME_FILES, showToast } from './utils/helpers';
 import type { Player, GameConfig, GameData } from './types';
 
-// ===== DOM 引用（使用非空断言） =====
+// ===== DOM 引用 =====
 const topNav = document.getElementById('topNav')!;
 const pageLogin = document.getElementById('pageLogin')!;
 const pageStudio = document.getElementById('pageStudio')!;
@@ -75,7 +75,6 @@ function showMessage(msg: string, type: 'success' | 'error' = 'success') {
     }, 3000);
 }
 
-// 登录
 loginBtn.addEventListener('click', async () => {
     const id = loginId.value.trim();
     const pwd = loginPwd.value.trim();
@@ -95,7 +94,6 @@ loginBtn.addEventListener('click', async () => {
     }
 });
 
-// 注册
 registerBtn.addEventListener('click', async () => {
     const id = loginId.value.trim();
     const pwd = loginPwd.value.trim();
@@ -115,7 +113,6 @@ registerBtn.addEventListener('click', async () => {
     }
 });
 
-// 退出
 logoutBtn.addEventListener('click', () => {
     auth.logout();
     currentUser = null;
@@ -125,7 +122,6 @@ logoutBtn.addEventListener('click', () => {
     loginPwd.value = '';
 });
 
-// 切换页面
 showProfileBtn.addEventListener('click', () => {
     showPage('profile');
     updateProfileUI();
@@ -139,7 +135,6 @@ backToStudioBtn.addEventListener('click', () => {
 // ===== 游戏工坊 =====
 async function loadGameConfigs() {
     gameConfigs = await github.getAllGames() || {};
-    return gameConfigs;
 }
 
 function getGameList(filter: 'all' | 'my' | 'admin') {
@@ -207,7 +202,6 @@ function renderGameList(filter: 'all' | 'my' | 'admin' = 'all') {
         `;
     }).join('');
 
-    // 事件绑定 - 游玩
     document.querySelectorAll('.play-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const id = (e.target as HTMLElement).getAttribute('data-game');
@@ -215,7 +209,6 @@ function renderGameList(filter: 'all' | 'my' | 'admin' = 'all') {
         });
     });
 
-    // 事件绑定 - 切换开关 (管理员)
     document.querySelectorAll('.toggle-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             const id = (e.target as HTMLElement).getAttribute('data-game');
@@ -233,7 +226,6 @@ function renderGameList(filter: 'all' | 'my' | 'admin' = 'all') {
         });
     });
 
-    // 事件绑定 - 白名单管理 (管理员)
     document.querySelectorAll('.whitelist-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             const id = (e.target as HTMLElement).getAttribute('data-game');
@@ -255,7 +247,6 @@ function renderGameList(filter: 'all' | 'my' | 'admin' = 'all') {
         });
     });
 
-    // 事件绑定 - 黑名单管理 (管理员)
     document.querySelectorAll('.blacklist-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             const id = (e.target as HTMLElement).getAttribute('data-game');
@@ -295,7 +286,7 @@ function openGame(gameId: string) {
     }
 
     modalTitle.textContent = game.name;
-    if (gameFrame) gameFrame.src = `/gameList/${game.file}`;
+    if (gameFrame) gameFrame.src = `gameList/${game.file}`;
     modal.classList.remove('hidden');
 }
 
@@ -374,7 +365,6 @@ function updateProfileUI() {
     roleBadge.textContent = user.isAdmin ? '👑 管理员' : '👤 玩家';
     roleBadge.className = 'role-badge ' + (user.isAdmin ? 'admin' : '');
     
-    // 头像框
     document.querySelectorAll('.frame-item').forEach(el => {
         const f = el.getAttribute('data-frame') || 'default';
         el.classList.toggle('active', f === frame);
@@ -382,7 +372,6 @@ function updateProfileUI() {
         el.classList.toggle('locked', !hasPermission);
     });
     
-    // 管理员面板
     if (user.isAdmin) {
         adminPanel.classList.remove('hidden');
         renderAdminGames();
@@ -528,7 +517,6 @@ frameSelector.addEventListener('click', (e) => {
 async function init() {
     console.log('🚀 应用初始化...');
     
-    // 检查GitHub连接
     if (!github.isConfigured()) {
         console.warn('⚠️ GitHub未配置，请检查 .env 文件');
         showPage('login');
@@ -538,7 +526,6 @@ async function init() {
     const connected = await github.testConnection();
     console.log(connected ? '✅ GitHub已连接' : '❌ GitHub连接失败');
     
-    // 检查是否有保存的会话
     const session = getSession();
     if (session) {
         try {
@@ -559,14 +546,11 @@ async function init() {
         } catch (e) {
             console.warn('会话恢复失败:', e);
         }
-        // 清除无效会话
         localStorage.removeItem('gameSession');
     }
     
-    // 未登录，显示登录页面
     showPage('login');
     console.log('📱 显示登录页面');
 }
 
-// 启动应用
 init();

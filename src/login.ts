@@ -31,7 +31,7 @@ loginBtn?.addEventListener('click', async () => {
   showMessage(result.message, result.success ? 'success' : 'error');
   if (result.success) {
     setTimeout(() => {
-      window.location.href = '/studio.html';
+      window.location.href = 'studio.html';
     }, 500);
   }
 });
@@ -47,14 +47,14 @@ registerBtn?.addEventListener('click', async () => {
   showMessage(result.message, result.success ? 'success' : 'error');
   if (result.success) {
     setTimeout(() => {
-      window.location.href = '/studio.html';
+      window.location.href = 'studio.html';
     }, 500);
   }
 });
 
 auth.init().then((user) => {
   if (user) {
-    window.location.href = '/studio.html';
+    window.location.href = 'studio.html';
   }
 });
 

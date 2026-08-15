@@ -3,7 +3,6 @@ import { auth } from './modules/auth';
 import { profile } from './modules/profile';
 import { github } from './api/github';
 import { GAME_FILES, showToast } from './utils/helpers';
-import type { RankEntry } from './types';
 
 const navAvatar = document.getElementById('navAvatar');
 const navUserName = document.getElementById('navUserName');
@@ -32,21 +31,18 @@ const goRankList = document.getElementById('goRankList');
 let currentUser: any = null;
 let initialized = false;
 
-// 检查登录
 async function checkAuth() {
   const user = await auth.init();
   if (!user) {
-    window.location.href = '/';
+    window.location.href = 'index.html';
     return false;
   }
   currentUser = user;
   return true;
 }
 
-// ✅ 加载排行榜
 async function loadRankLists() {
   try {
-    // 象棋排行榜
     if (chessRankList) {
       const chessData = await auth.getRankList('chess');
       if (chessData.length === 0) {
@@ -63,7 +59,6 @@ async function loadRankLists() {
       }
     }
 
-    // 围棋排行榜
     if (goRankList) {
       const goData = await auth.getRankList('go');
       if (goData.length === 0) {
@@ -113,7 +108,6 @@ function updateUI() {
     roleBadge.className = 'role-badge ' + (isAdmin ? 'admin' : '');
   }
   
-  // 头像框
   document.querySelectorAll('.frame-item').forEach(el => {
     const f = el.getAttribute('data-frame') || 'default';
     el.classList.toggle('active', f === frame);
@@ -123,7 +117,6 @@ function updateUI() {
     el.classList.toggle('locked', !hasPermission);
   });
   
-  // 管理员面板
   if (adminPanel && isAdmin) {
     adminPanel.classList.remove('hidden');
     renderAdminGames();
@@ -131,10 +124,7 @@ function updateUI() {
     adminPanel.classList.add('hidden');
   }
   
-  // 我的游戏
   updateMyGames();
-
-  // ✅ 加载排行榜
   loadRankLists();
 }
 
@@ -194,7 +184,6 @@ async function renderAdminGames() {
   });
 }
 
-// 改名
 changeNameBtn?.addEventListener('click', () => {
   if (renameModal) {
     newNameInput.value = currentUser?.name || '';
@@ -234,7 +223,6 @@ newNameInput?.addEventListener('keypress', (e) => {
   }
 });
 
-// 换头像
 changeAvatarBtn?.addEventListener('click', () => avatarUpload.click());
 
 avatarUpload?.addEventListener('change', async (e) => {
@@ -248,7 +236,6 @@ avatarUpload?.addEventListener('change', async (e) => {
   showToast('头像已更换: ' + randomEmoji);
 });
 
-// 修改简介
 editBioBtn?.addEventListener('click', () => {
   if (!currentUser) return;
   const newBio = prompt('请输入个人简介:', currentUser.bio || '');
@@ -260,7 +247,6 @@ editBioBtn?.addEventListener('click', () => {
   }
 });
 
-// 刷新
 refreshBtn?.addEventListener('click', async () => {
   const user = await profile.refreshProfile();
   if (user) {
@@ -270,7 +256,6 @@ refreshBtn?.addEventListener('click', async () => {
   }
 });
 
-// 头像框
 frameSelector?.addEventListener('click', (e) => {
   const target = e.target as HTMLElement;
   if (target.classList.contains('frame-item')) {
@@ -284,13 +269,11 @@ frameSelector?.addEventListener('click', (e) => {
   }
 });
 
-// 退出
 logoutBtn?.addEventListener('click', () => {
   auth.logout();
-  window.location.href = '/';
+  window.location.href = 'index.html';
 });
 
-// 初始化
 async function init() {
   const ok = await checkAuth();
   if (!ok) return;

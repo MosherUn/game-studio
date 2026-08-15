@@ -2,7 +2,7 @@ import './style.css';
 import { auth } from './modules/auth';
 import { github } from './api/github';
 import { GAME_FILES, showToast } from './utils/helpers';
-import type { GameData } from './types';  // ✅ 修复：使用 ./types 而不是 ../types
+import type { GameData } from './types';
 
 const navAvatar = document.getElementById('navAvatar');
 const navUserName = document.getElementById('navUserName');
@@ -29,7 +29,7 @@ let initialized = false;
 async function checkAuth() {
   const user = await auth.init();
   if (!user) {
-    window.location.href = '/';
+    window.location.href = 'index.html';
     return false;
   }
   currentUser = user;
@@ -177,7 +177,7 @@ function openGame(gameId: string) {
   }
 
   if (modalTitle) modalTitle.textContent = game.name;
-  if (gameFrame) gameFrame.src = `/gameList/${game.file}`;
+  if (gameFrame) gameFrame.src = `gameList/${game.file}`;
   if (modal) modal.classList.remove('hidden');
 }
 
@@ -186,7 +186,6 @@ modalClose?.addEventListener('click', () => {
   if (gameFrame) gameFrame.src = 'about:blank';
 });
 
-// 使用非空断言解决 null 检查
 if (menuAll) {
   menuAll.addEventListener('click', () => {
     menuAll.classList.add('active');
@@ -229,7 +228,7 @@ refreshBtn?.addEventListener('click', async () => {
 
 logoutBtn?.addEventListener('click', () => {
   auth.logout();
-  window.location.href = '/';
+  window.location.href = 'index.html';
 });
 
 async function init() {
