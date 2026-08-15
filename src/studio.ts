@@ -162,6 +162,7 @@ function renderGameList(filter: 'all' | 'my' | 'admin' = 'all') {
   });
 }
 
+// ✅ 修复：游戏打开链接
 function openGame(gameId: string) {
   const game = GAME_FILES.find(g => g.id === gameId);
   if (!game) { showToast('游戏不存在', 'error'); return; }
@@ -177,7 +178,8 @@ function openGame(gameId: string) {
   }
 
   if (modalTitle) modalTitle.textContent = game.name;
-  if (gameFrame) gameFrame.src = `gameList/${game.file}`;
+  // ✅ 修复：使用完整的子路径
+  if (gameFrame) gameFrame.src = `/game-studio/gameList/${game.file}`;
   if (modal) modal.classList.remove('hidden');
 }
 
