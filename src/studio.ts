@@ -74,10 +74,10 @@ function getGameList(filter: 'all' | 'my' | 'admin') {
 function renderGameList(filter: 'all' | 'my' | 'admin' = 'all') {
   const games = getGameList(filter);
   const isAdmin = currentUser?.isAdmin || false;
-  
+
   if (gameCount) gameCount.textContent = `${games.length} 个游戏`;
   if (panelCount) panelCount.textContent = `${games.length} 个`;
-  
+
   const titles = { all: '🎯 全部游戏', my: '📌 可游玩', admin: '⚙️ 管理游戏' };
   if (panelTitle) panelTitle.textContent = titles[filter] || '游戏';
 
@@ -91,7 +91,7 @@ function renderGameList(filter: 'all' | 'my' | 'admin' = 'all') {
   gameList.innerHTML = games.map(g => {
     const status = g.enabled ? '🟢 开放' : '🔴 关闭';
     const showAdmin = filter === 'admin' && isAdmin;
-    
+
     return `
       <div class="game-item" data-game-id="${g.id}">
         <div class="game-info">
@@ -236,7 +236,7 @@ logoutBtn?.addEventListener('click', () => {
 async function init() {
   const ok = await checkAuth();
   if (!ok) return;
-  
+
   updateUserInfo();
   await loadGameConfigs();
   renderGameList('all');
@@ -252,11 +252,11 @@ init();
 window.addEventListener('message', async (event) => {
   // 验证消息来源
   if (event.origin !== window.location.origin) return;
-  
+
   const data = event.data;
   if (data.type === 'updateRank') {
     console.log('📥 收到段位数据同步请求:', data);
-    
+
     try {
       // 获取当前用户
       const user = await auth.init();
@@ -264,7 +264,7 @@ window.addEventListener('message', async (event) => {
         console.warn('⚠️ 未登录，无法保存段位数据');
         return;
       }
-      
+
       // 更新用户的段位数据
       if (data.game === 'go') {
         user.goRank = {
@@ -293,7 +293,7 @@ window.addEventListener('message', async (event) => {
         };
         console.log('✅ 象棋段位数据已更新');
       }
-      
+
       // 保存到 GitHub
       const success = await auth.saveToGit(user);
       if (success) {
