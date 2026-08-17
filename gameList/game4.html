@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="zh">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,7 +10,6 @@
             padding: 0;
             box-sizing: border-box;
         }
-
         body {
             background: #0b0e14;
             color: #e8edf5;
@@ -22,7 +20,6 @@
             font-family: system-ui, sans-serif;
             padding: 20px;
         }
-
         .game-container {
             max-width: 750px;
             width: 100%;
@@ -31,7 +28,6 @@
             padding: 24px;
             border: 1px solid #2a3340;
         }
-
         .game-header {
             display: flex;
             justify-content: space-between;
@@ -40,7 +36,6 @@
             gap: 12px;
             margin-bottom: 16px;
         }
-
         .game-title {
             font-size: 24px;
             font-weight: 700;
@@ -49,7 +44,6 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-
         .game-info {
             display: flex;
             gap: 16px;
@@ -57,24 +51,20 @@
             font-size: 14px;
             color: #889bb5;
         }
-
         .game-info span {
             background: #1a212c;
             padding: 4px 14px;
             border-radius: 30px;
             border: 1px solid #2a3340;
         }
-
         .game-info .rank {
             color: #b388ff;
             font-weight: 600;
         }
-
         .game-info .score {
             color: #4caf50;
             font-weight: 600;
         }
-
         .game-info .ai-level {
             color: #ff9800;
             font-weight: 600;
@@ -90,18 +80,15 @@
             border-radius: 30px;
             align-items: center;
         }
-
         .mode-selector .btn {
             padding: 6px 16px;
             font-size: 13px;
         }
-
         .mode-selector .btn.active {
             border-color: #4c6ef5;
             background: #2a3a5a;
             color: #fff;
         }
-
         .ai-level-selector {
             display: flex;
             gap: 4px;
@@ -109,18 +96,15 @@
             margin-left: auto;
             flex-wrap: wrap;
         }
-
         .ai-level-selector span {
             color: #6b7a8f;
             font-size: 12px;
             margin-right: 4px;
         }
-
         .ai-level-selector .btn {
             padding: 2px 10px;
             font-size: 11px;
         }
-
         .ai-level-selector .btn.active {
             border-color: #ff9800;
             background: #2a2a1a;
@@ -133,7 +117,6 @@
             margin: 12px 0;
             position: relative;
         }
-
         canvas {
             border: 2px solid #2a3340;
             border-radius: 16px;
@@ -153,7 +136,6 @@
             justify-content: center;
             margin-top: 12px;
         }
-
         .btn {
             padding: 8px 20px;
             border: none;
@@ -165,42 +147,34 @@
             color: #e8edf5;
             border: 1px solid #3f4b5e;
         }
-
         .btn:hover {
             transform: scale(0.95);
         }
-
         .btn-primary {
             background: #4c6ef5;
             border-color: #4c6ef5;
             color: white;
         }
-
         .btn-success {
             background: #2e7d32;
             border-color: #1b5e20;
             color: white;
         }
-
         .btn-danger {
             background: #d32f2f;
             border-color: #b71c1c;
             color: white;
         }
-
         .btn-outline {
             background: transparent;
         }
-
         .btn-outline:hover {
             background: #1e2632;
         }
-
         .btn:disabled {
             opacity: 0.4;
             cursor: not-allowed;
         }
-
         .btn-sm {
             padding: 4px 12px;
             font-size: 12px;
@@ -218,29 +192,23 @@
             gap: 8px;
             font-size: 14px;
         }
-
         .status-bar .turn {
             color: #b388ff;
             font-weight: 600;
         }
-
         .status-bar .move-count {
             color: #6b7a8f;
         }
-
         .status-bar .thinking {
             color: #ff9800;
             font-weight: 600;
             animation: pulse 0.8s infinite;
         }
-
         @keyframes pulse {
-
             0%,
             100% {
                 opacity: 1;
             }
-
             50% {
                 opacity: 0.2;
             }
@@ -256,11 +224,9 @@
             border-radius: 16px;
             font-size: 13px;
         }
-
         .rank-info .label {
             color: #6b7a8f;
         }
-
         .rank-info .value {
             color: #e8edf5;
             font-weight: 600;
@@ -278,7 +244,6 @@
             flex-wrap: wrap;
             gap: 8px;
         }
-
         .season-info .season-title {
             color: #b388ff;
             font-weight: 600;
@@ -297,11 +262,9 @@
             z-index: 1000;
             padding: 20px;
         }
-
         .modal-overlay.active {
             display: flex;
         }
-
         .modal-box {
             background: #141a24;
             border-radius: 36px;
@@ -311,19 +274,16 @@
             border: 1px solid #2a3340;
             text-align: center;
         }
-
         .modal-box h3 {
             font-size: 20px;
             margin-bottom: 12px;
         }
-
         .modal-box p {
             color: #889bb5;
             margin-bottom: 16px;
             font-size: 14px;
             white-space: pre-line;
         }
-
         .modal-box .btn {
             margin: 4px;
         }
@@ -335,11 +295,9 @@
             border-radius: 16px;
             display: none;
         }
-
         .online-panel.active {
             display: block;
         }
-
         .online-panel .room-info {
             display: flex;
             justify-content: space-between;
@@ -347,7 +305,6 @@
             flex-wrap: wrap;
             gap: 8px;
         }
-
         .online-panel input {
             background: #1a212c;
             border: 1px solid #2a3340;
@@ -357,7 +314,6 @@
             font-size: 13px;
             width: 150px;
         }
-
         .online-panel input::placeholder {
             color: #6b7a8f;
         }
@@ -366,34 +322,27 @@
             .game-container {
                 padding: 12px;
             }
-
             .game-title {
                 font-size: 18px;
             }
-
             .rank-info {
                 grid-template-columns: 1fr 1fr;
             }
-
             .status-bar {
                 font-size: 12px;
             }
-
             .mode-selector {
                 justify-content: center;
             }
-
             .ai-level-selector {
                 margin-left: 0;
             }
-
             .online-panel input {
                 width: 100px;
             }
         }
     </style>
 </head>
-
 <body>
     <div class="game-container">
         <div class="game-header">
@@ -772,9 +721,8 @@
         }
 
         // ============================================================
-        // 围棋段位系统 - 完整版
+        // 围棋段位系统
         // ============================================================
-
         const RANK_LEVELS = [
             { name: '无', minScore: 0, maxScore: 99 },
             { name: '25级', minScore: 100, maxScore: 199 },
@@ -851,8 +799,8 @@
                         lastRank: this.lastRank,
                         promotionHistory: this.promotionHistory
                     }));
-
-                    // ✅ 同步到GitHub
+                    
+                    // 同步到GitHub
                     if (window.parent && window.parent !== window) {
                         let playerId = 'GUEST';
                         try {
@@ -863,10 +811,7 @@
                                     playerId = parsed.id;
                                 }
                             }
-                        } catch (e) {
-                            console.warn('获取玩家ID失败:', e);
-                        }
-
+                        } catch (e) {}
                         window.parent.postMessage({
                             type: 'updateRank',
                             game: 'go',
@@ -883,7 +828,6 @@
                                 promotionHistory: this.promotionHistory || []
                             }
                         }, '*');
-                        console.log('📤 围棋段位数据已同步到GitHub');
                     }
                 } catch (e) {
                     console.warn('保存段位数据失败:', e);
@@ -1742,7 +1686,7 @@
 
                 document.getElementById('seasonTitle').textContent = `🏆 第 ${rankStats.season} 赛季`;
                 document.getElementById('seasonDate').textContent =
-                    `${sStart.getFullYear()}-${String(sStart.getMonth() + 1).padStart(2, '0')}-${String(sStart.getDate()).padStart(2, '0')} 开启`;
+                    `${sStart.getFullYear()}-${String(sStart.getMonth()+1).padStart(2,'0')}-${String(sStart.getDate()).padStart(2,'0')} 开启`;
                 document.getElementById('seasonEnd').textContent =
                     `定段赛: 每月7号 · 90天/赛季`;
 
@@ -1779,5 +1723,4 @@
         });
     </script>
 </body>
-
 </html>
